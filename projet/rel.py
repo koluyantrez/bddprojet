@@ -37,7 +37,6 @@ class Relation:
 
         #Create the querry to create 
         querry = "CREATE TABLE " + self.name + str
-        print(querry)
         # If there is an error, this means the table already exist, so we replace the old one
         try:
             self.c.execute(querry)
@@ -59,7 +58,8 @@ class Relation:
     
 
     #reste a faire : def addTuple()
-    def addTuple(self,tup: tuple):
+    # Return the SQLite querry as a string
+    def addTuple(self,tup: tuple) -> str:
         # A tuple needs to be the same length than the number of Arguments
         check = self.checkTuple(tup)
         
@@ -75,12 +75,12 @@ class Relation:
         # The tuple is okay, but we still need to check if it isn't already in the table
         # Since the table cannot have duplicates, if it throws an error it will mean that the tuple already exist in this relation
         querry = "INSERT INTO "+ self.name +" VALUES " +  str(tup)
-        print(querry)
         try:
             self.c.execute(querry)
             self.conn.commit()
         except:
             raise Exception("The tuple already exist in " + self.name)
+        return querry
         
         
         
