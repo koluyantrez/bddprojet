@@ -6,6 +6,8 @@ class Relation:
     def __init__(self,database: str,name: str, args: dict):
                
         self.name = name                        # The name of the relation
+        
+        self.dataBase = database
 
         self.conn = sqlite3.connect(database)   # Links to the given database
 
@@ -74,7 +76,11 @@ class Relation:
             raise Exception("The tuple must have same number of arguments than in " + self.name + " , in this case: " + str(len(self.args)))
         # The tuple is okay, but we still need to check if it isn't already in the table
         # Since the table cannot have duplicates, if it throws an error it will mean that the tuple already exist in this relation
-        querry = "INSERT INTO "+ self.name +" VALUES " +  str(tup)
+        querry = "INSERT INTO "+ self.name +" VALUES "
+        if (len(tup) == 1):
+            querry += "("+tup[0]+")"
+        else:
+            querry += str(tup)
         try:
             self.c.execute(querry)
             self.conn.commit()
