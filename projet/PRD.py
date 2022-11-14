@@ -1,10 +1,28 @@
 from rel import Relation
 from sqliteEnum import SqliteTypes as sType
 
+# Every other class in this file is a child of the expression class stocking :
+# The new Rel
+# The old Rel
+# The SQL querry created
+class Expression():
+    def __init__(self,oldRel : Relation, newRel : Relation, querry:str) -> None:
+        self.oldRel = oldRel
+        self.newRel = newRel
+        self.querry = querry
+    
+    
 
-class Project():
+
+    def __str__(self) -> str:
+        return str(self.newRel)
+
+class Project(Expression):
     def __init__(self,args : tuple, rel : Relation) -> None:
-        self.oldRel = rel
+        
+        #Calls the parent constructor
+        super().__init__(rel,None,None)
+
         self.args = args
         # We check the arguments given
         argsDic = self.__checkArgs()
@@ -73,7 +91,64 @@ class Project():
             except Exception as e:
                 pass
 
-        #self.oldRel.c.execute("select * from " + self.name)
-        #print(self.oldRel.c.fetchall())
-    
         
+class Rename(Expression):
+    # Rename("OldArg", "NewArg", Rel)
+    # = Rename in Rel, OldArg to NewArg
+
+    def __init__(self, oldArgu: str, newArgu: str, rel: Relation) -> None:
+        super().__init__(rel, None, None)
+        
+        # First we check if the old argument exist in the old rel
+        self.__checkOldArg(oldArgu,newArgu)
+        self.oldArgu = oldArgu
+        self.newArgu = newArgu
+        
+        # We can create the name of the new relation
+        self.newName = "RenameOf_" + oldArgu + "To" + newArgu + "_From" + rel.name
+        
+        
+
+        # In the dic of Args from the oldRelation we change the old name to the new one
+        self.newRel = self.__createRelation()
+        # ex: 
+        # ALTER TABLE STOCK RENAME COLUMN Qty TO Quantity
+
+    def __checkOldArg(self,oldArg,newArg):
+        if (len(oldArg) == 0 or len(newArg) == 0):
+            raise Exception("The length of oldArt and newArg must be greater than 0")
+        if ( not self.oldRel.args.__contains__(oldArg)):
+            raise Exception("The relation " + self.oldRel.name + " doesn't contain any argument called: " + oldArg)
+        if (oldArg == newArg):
+            raise Exception("It is useless to rename an argument to the same name")
+        if (self.oldRel.args.__contains__(newArg)):
+            raise Exception("The relation " + self.oldRel.name + " already has another argument called: " + newArg)
+
+    # Get the dict of new Args for the new rel
+    # Ex: change Qty to Quantity in {'W': <SqliteTypes.TEXT: 'text'>, 'Pro': <SqliteTypes.TEXT: 'text'>, 'Color': <SqliteTypes.TEXT: 'text'>, 'Qty': <SqliteTypes.INTEGER: 'integer'>}
+    # new: {'W': <SqliteTypes.TEXT: 'text'>, 'Pro': <SqliteTypes.TEXT: 'text'>, 'Color': <SqliteTypes.TEXT: 'text'>, 'Quantity': <SqliteTypes.INTEGER: 'integer'>}
+    def __getNewArgs(self) -> dict:
+        newArgs = {}
+
+        for key in self.oldRel.args:
+            if (not key == self.oldArgu):
+                newArgs[key] = self.oldRel.args[key]
+            else:
+                newArgs[self.newArgu] = self.oldRel.args[key]
+        
+        return newArgs
+
+    def __createRelation(self) -> Relation:
+        newArgs = self.__getNewArgs()
+        # Create the rel
+        R = Relation(self.oldRel.dataBase,self.newName,newArgs)
+        # We need to add all tuples to the new rel
+        nbOfTup = self.oldRel.getNbOfTuple()
+        self.oldRel.c.execute("SELECT * FROM " + self.oldRel.name)
+        
+        for i in range(nbOfTup):
+            R.addTuple(self.oldRel.c.fetchone())
+
+        return R
+        
+

@@ -172,9 +172,7 @@ class Relation:
         # Print all the other line/ tuples:
 
         # Count the number of tuple
-        self.c.execute("SELECT COUNT(*) FROM " + self.name)
-
-        nbOfTup = self.c.fetchone()[0]
+        nbOfTup = self.getNbOfTuple()
         # Seleect all the tuple
         self.c.execute("SELECT * FROM " + self.name)
         for i in range(nbOfTup):
@@ -184,8 +182,6 @@ class Relation:
                 res += str(tup[j]) + " "*(keys[keysList[j]] - len(str(tup[j]))) + "  | " 
             
             res += "\n"
-
-
 
         return res
 
@@ -201,9 +197,7 @@ class Relation:
 
         
         # Count the number of tuple
-        self.c.execute("SELECT COUNT(*) FROM " + self.name)
-
-        nbOfTup = self.c.fetchone()[0]
+        nbOfTup = self.getNbOfTuple()
         # Get all tuple
         self.c.execute("SELECT * FROM " + self.name)
 
@@ -216,7 +210,12 @@ class Relation:
                 if keys[keysList[j]]  < wordLen:
                     keys[keysList[j]] = wordLen
         return keys
+    
+    # ATTENTION IT USES AN EXECUTE METHOD
+    def getNbOfTuple(self) -> int:
+        self.c.execute("SELECT COUNT(*) FROM " + self.name)
 
+        return self.c.fetchone()[0]
         
      
 
