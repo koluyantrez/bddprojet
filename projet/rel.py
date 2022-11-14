@@ -194,7 +194,7 @@ class Relation:
         keys = {}
         keysList = []
         for key in self.args:
-            keys[key] = 0
+            keys[key] = len(key)
             keysList.append(key) 
         
         nbOfArg = len(keys)
