@@ -29,6 +29,24 @@ args = {"NrEmp": sType.TEXT, "Dept": sType.TEXT, "Pourcent": sType.INTEGER}
 EMPLOYE = Relation(":memory:", "EMPLOYE", args)
 
 EMPLOYE.addTuple(("E1","Info",40))
+EMPLOYE.addTuple(("E1","Bio",40))
+EMPLOYE.addTuple(("E2","Eco",100))
+EMPLOYE.addTuple(("E3","Bio",50))
+EMPLOYE.addTuple(("E3","Eco",50))
+EMPLOYE.addTuple(("E4","Eco",100))
+EMPLOYE.addTuple(("E5","Eco",50))
+EMPLOYE.addTuple(("E5","Bio",25))
+EMPLOYE.addTuple(("E5","Info",25))
+
+
+args = {"NomDept":sType.TEXT,"Budget":sType.INTEGER,"Chef":sType.TEXT}
+DEPARTEMENT = Relation(":memory:", "DEPARTEMENT", args)
+
+DEPARTEMENT.addTuple(("Info",5000,"E1"))
+DEPARTEMENT.addTuple(("Bio",3500,"E1"))
+DEPARTEMENT.addTuple(("Eco",4000,"E5"))
+
+
 
 
 

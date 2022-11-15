@@ -148,7 +148,7 @@ class Relation:
     # Print the table in a cool way
     def __str__(self):
         res = self.name + "|"
-        keys = self.getMaxWordsLen()
+        keys = self.__getMaxWordsLen()
         
         keysList = []
         for key in self.args:
@@ -186,7 +186,7 @@ class Relation:
         return res
 
     # Return a dict that has for each arg the max length for the word
-    def getMaxWordsLen(self) -> dict:
+    def __getMaxWordsLen(self) -> dict:
         keys = {}
         keysList = []
         for key in self.args:
