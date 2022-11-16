@@ -24,7 +24,7 @@ class Relation:
         if (not isinstance(dicoArg,dict) or len(dicoArg) == 0 ):
             raise Exception("args must be a dictionary with a least one element")
         
-        self.__args = dicoArg
+        self.args = dicoArg
         #Create the string that will be added in the sql querry to add arguments in the table
         str = ""
         allArgs = ""
@@ -70,12 +70,12 @@ class Relation:
     #       ex: (1, "a", int, float) : "a" should be an integer or a float
     
     def checkTuple(self,tup : tuple):
-        if(not len(tup) == len(self.__args)):
+        if(not len(tup) == len(self.args)):
             return 0
         
         index = 0
-        for key in self.__args:
-            arg = self.__args[key]
+        for key in self.args:
+            arg = self.args[key]
             # Type primitif à tester : str, int, float and None
             # We can skip the rest
             
@@ -124,7 +124,7 @@ class Relation:
             raise Exception(res)
 
         elif(check == 0):
-            raise Exception("The tuple must have same number of arguments than in " + self.__name + " , in this case: " + str(len(self.__args)))
+            raise Exception("The tuple must have same number of arguments than in " + self.__name + " , in this case: " + str(len(self.args)))
         # The tuple is okay, but we still need to check if it isn't already in the table
         # Since the table cannot have duplicates, if it throws an error it will mean that the tuple already exist in this relation
         querry = "INSERT INTO "+ self.__name +" VALUES "
@@ -162,7 +162,7 @@ class Relation:
         keys = self.__getMaxWordsLen(c)
         
         keysList = []
-        for key in self.__args:
+        for key in self.args:
             keysList.append(key) 
         
         nbOfArg = len(keys)
@@ -200,7 +200,7 @@ class Relation:
     def __getMaxWordsLen(self,c: sqlite3.Cursor) -> dict:
         keys = {}
         keysList = []
-        for key in self.__args:
+        for key in self.args:
             keys[key] = len(key)
             keysList.append(key) 
         
@@ -224,7 +224,6 @@ class Relation:
     
 
     # ____________________________________________GETTER_________________________________________________
-    # ATTENTION IT USES AN EXECUTE METHOD
     def getNbOfTuple(self) -> int:
         return self.__nbOfTuple
     
@@ -235,10 +234,21 @@ class Relation:
         return self.__dataBase
     
     def getCursor(self) -> sqlite3.Cursor :
-        return self.__c
+        # If cursor raises an error then the database if closed so we open a new connection
+        try:
+            self.__conn.cursor().execute("SELECT * FROM" + self.__name)
+        except:
+            self.__conn = sqlite3.connect(self.__dataBase)
+            c = self.__conn.cursor()
+            return c
+        return self.__conn.cursor()
+        
+    # Kills the connection of the relation to the database, can be open again with getCursor
+    def killCursor(self) -> None:
+        self.__conn.close()
 
     def getArgs(self) -> dict:
-        return self.__args
+        return self.args
 
         
 
