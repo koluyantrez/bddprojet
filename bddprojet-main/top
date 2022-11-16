@@ -1,0 +1,166 @@
+[33mcommit a3fea5ced6832d0d72c2bc5845b283d7506bcc9f[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: PizzaManStarted <100306838+PizzaManStarted@users.noreply.github.com>
+Date:   Fri Nov 11 12:09:13 2022 +0100
+
+    Fixed method addTuple to rel and added primary keys to tables when created, I might need to remove the NULL types
+
+[1mdiff --git a/projet/RelTest.py b/projet/RelTest.py[m
+[1mindex f721765..89841de 100644[m
+[1m--- a/projet/RelTest.py[m
+[1m+++ b/projet/RelTest.py[m
+[36m@@ -2,10 +2,11 @@[m [mimport rel[m
+ from sqliteEnum import SqliteTypes as sType[m
+ [m
+ [m
+[31m-args = {"A": sType.INTEGER,"B": sType.TEXT, "C": sType.REAL}[m
+[31m-[m
+[31m-p1 = rel.Relation("relationdata.db","TestRel",args)[m
+[32m+[m[32margs = {"A": sType.REAL,"B": sType.TEXT, "C": sType.INTEGER}[m
+ [m
+[32m+[m[32m#p1 = rel.Relation("relationdata.db","TestRel",args)[m
+[32m+[m[32mp1 = rel.Relation("relationdata.db","R",args)[m
+[32m+[m[32mp2 = rel.Relation("relationdata.db","S",args)[m
+ [m
+ [m
+ [m
+[36m@@ -16,8 +17,18 @@[m [mp1.c.execute("""SELECT name FROM sqlite_master[m
+ [m
+ print(p1.c.fetchall())[m
+ [m
+[31m-x = (3,1,4)[m
+[32m+[m[32mx = (8.5,"H",98)[m
+[32m+[m[32my = (1,"O",69)[m
+[32m+[m
+[32m+[m
+[32m+[m
+ p1.addTuple(x)[m
+[32m+[m[32mp1.addTuple(y)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mp1.c.execute("SELECT * FROM R")[m
+[32m+[m[32mprint(p1.c.fetchall())[m
+[32m+[m
+ [m
+ [m
+ #print(sType.INTEGER.value)[m
+\ No newline at end of file[m
+[1mdiff --git a/projet/rel.py b/projet/rel.py[m
+[1mindex 0c0a11a..7df58e8 100644[m
+[1m--- a/projet/rel.py[m
+[1m+++ b/projet/rel.py[m
+[36m@@ -1,5 +1,5 @@[m
+ import sqlite3[m
+[31m-[m
+[32m+[m[32mfrom sqliteEnum import SqliteTypes as sType[m
+ [m
+ [m
+ class Relation:[m
+[36m@@ -23,12 +23,19 @@[m [mclass Relation:[m
+         self.args = dicoArg[m
+         #Create the string that will be added in the sql querry to add arguments in the table[m
+         str = ""[m
+[32m+[m[32m        allArgs = ""[m
+         for key in dicoArg:[m
+             str += key + " " + dicoArg[key].value + ","[m
+[32m+[m[32m            allArgs += key + ","[m
+ [m
+[31m-        str = "(" + str[0:len(str)-1] + ")"[m
+[32m+[m[41m        [m
+[32m+[m[32m        #str = "(" + str[0:len(str)-1] + ")"[m
+[32m+[m[32m        str = "(" + str[0:len(str)-1][m[41m [m
+[32m+[m[32m        # Adds the primary key to all column so that we only allow distinct tuples[m
+[32m+[m[32m        str += " ,PRIMARY KEY (" + allArgs[0:len(allArgs)-1] + "));"[m
+[32m+[m[41m        [m
+ [m
+[31m-        #Create the querry[m
+[32m+[m[32m        #Create the querry to create[m[41m [m
+         querry = "CREATE TABLE " + self.name + str[m
+         print(querry)[m
+         # If there is an error, this means the table already exist, so we replace the old one[m
+[36m@@ -43,22 +50,80 @@[m [mclass Relation:[m
+         [m
+         [m
+         [m
+[31m-[m
+[32m+[m[32m    # Deletes the relation[m[41m [m
+     def deleteRel(self):[m
+         self.c.execute("DROP TABLE " + self.name)[m
+         self.conn.commit()[m
+[32m+[m[41m        [m
+ [m
+     [m
+ [m
+     #reste a faire : def addTuple()[m
+     def addTuple(self,tup: tuple):[m
+         # A tuple needs to be the same length than the number of Arguments[m
+[32m+[m[32m        check = self.checkTuple(tup)[m
+[32m+[m[41m        [m
+[32m+[m
+[32m+[m[32m        if isinstance(check,tuple):[m
+[32m+[m[32m            res = "Argument " + str(check[0]) + " not matching with the relation " + self.name + " ,\n" + str(check[1]) + " should be :" + str(check[2])[m
+[32m+[m[32m            if (len(check) > 3):[m
+[32m+[m[32m                res += " or " + str(check[3])[m
+[32m+[m[32m            raise Exception(res)[m
+[32m+[m
+[32m+[m[32m        elif(check == 0):[m
+[32m+[m[32m            raise Exception("The tuple must have same number of arguments than in " + self.name + " , in this case: " + str(len(self.args)))[m
+[32m+[m[32m        # The tuple is okay, but we still need to check if it isn't already in the table[m
+[32m+[m[32m        # Since the table cannot have duplicates, if it throws an error it will mean that the tuple already exist in this relation[m
+[32m+[m[32m        querry = "INSERT INTO "+ self.name +" VALUES " +  str(tup)[m
+[32m+[m[32m        print(querry)[m
+[32m+[m[32m        try:[m
+[32m+[m[32m            self.c.execute(querry)[m
+[32m+[m[32m            self.conn.commit()[m
+[32m+[m[32m        except:[m
+[32m+[m[32m            raise Exception("The tuple already exist in " + self.name)[m
+[32m+[m[41m        [m
+[32m+[m[41m        [m
+[32m+[m[41m        [m
+[32m+[m[41m            [m
+[32m+[m[41m        [m
+[32m+[m[32m    # Check if the argument are of the correct type for their attribute[m
+[32m+[m[32m    # 1 = OK[m
+[32m+[m[32m    # 0 = Not the same length than arg[m
+[32m+[m[32m    # tuple = Problem with the type of an attribute and a value of the given tuple -> (Index of the problem in the tuple, Problem value, What type it should be, ... what other type it could be)[m
+[32m+[m[32m    #       ex: (1, "a", int, float) : "a" should be an integer or a float[m
+[32m+[m[41m    [m
+[32m+[m[32m    def checkTuple(self,tup : tuple):[m
+         if(not len(tup) == len(self.args)):[m
+[32m+[m[32m            return 0[m
+[32m+[m[41m        [m
+[32m+[m[32m        index = 0[m
+[32m+[m[32m        for key in self.args:[m
+[32m+[m[32m            arg = self.args[key][m
+[32m+[m[32m            # Type primitif à tester : str, int, float and None[m
+[32m+[m[32m            # We can skip the rest[m
+             [m
+[31m-            raise Exception("The tuple must have same number of arguments than in " + self.name + " , in this case: " + str(len(self.args)))[m
+[32m+[m[32m            # If text then the correct python types is : str[m
+[32m+[m[32m            if arg == sType.TEXT and not isinstance(tup[index],str):[m
+[32m+[m[32m                print("Fail with TEXT")[m
+[32m+[m[32m                return (index, tup[index], str)[m
+ [m
+[31m-        [m
+[32m+[m[32m            if arg == sType.INTEGER and not isinstance(tup[index], int):[m
+[32m+[m[32m                print("Fail with INTEGER")[m
+[32m+[m[32m                return (index, tup[index], int)[m
+[32m+[m
+[32m+[m[32m            if arg == sType.REAL and not isinstance(tup[index], float) and not isinstance(tup[index], int):[m
+[32m+[m[32m                print("Fail with REAL")[m
+[32m+[m[32m                return (index, tup[index], float, int)[m
+[32m+[m
+[32m+[m[32m            if arg == sType.NULL and not tup[index] == None:[m
+[32m+[m[32m                print("Fail with NULL")[m
+[32m+[m[32m                return (index, tup[index], None)[m
+[32m+[m[41m            [m
+[32m+[m
+[32m+[m
+[32m+[m[32m            index +=1[m
+[32m+[m
+[32m+[m
+[32m+[m[32m        return 1[m
+ [m
+[31m-    [m
+ [m
+[31m-        [m
+\ No newline at end of file[m
