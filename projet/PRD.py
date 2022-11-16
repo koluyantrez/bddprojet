@@ -2,26 +2,32 @@ from rel import Relation
 from sqliteEnum import SqliteTypes as sType
 
 # Every other class in this file is a child of the expression class stocking :
-# The new Rel
-# The old Rel
+# The new Relation
+# The old Relation
 # The SQL querry created
 class Expression():
-    def __init__(self,oldRel : Relation, newRel : Relation, querry:str) -> None:
-        self.oldRel = oldRel
-        self.newRel = newRel
-        self.querry = querry
+    def __init__(self,oldRel : Relation, newRel : Relation, querry:str, isOneExp = True) -> None:
+        self.oldRel     = oldRel
+        self.newRel     = newRel
+        self.querry     = querry
+        self.isOneExp   = isOneExp
     
-    
-
-
     def __str__(self) -> str:
-        return str(self.newRel)
+        return self.querry
 
 class Project(Expression):
-    def __init__(self,args : tuple, rel : Relation) -> None:
-        
+    def __init__(self,args : tuple, rel) -> None:
+
         #Calls the parent constructor
-        super().__init__(rel,None,None)
+        if(isinstance(rel,Expression)):
+            print("isExpression")
+            super().__init__(rel.newRel,None,None,False)
+        elif(isinstance(rel,Relation)):
+            super().__init__(rel,None,None)
+        else:
+            raise Exception("The relation argument must be an SPJRUD expression or a relation")
+        
+        
 
         self.args = args
         # We check the arguments given
@@ -29,17 +35,18 @@ class Project(Expression):
         # The name will be Unique for each projection
         argStr = self.__argsToString().replace(",","")
             
-        self.name = "ProjectOf_" + argStr + "_From" + rel.name
+        self.name = "ProjectOf_" + argStr + "_From" + self.oldRel.name
         
         self.querry = self.__createQuerry()
         
         
         # We create a new table in the database of the old one
-        self.newRel = Relation(rel.dataBase,self.name,argsDic)
+        self.newRel = Relation(self.oldRel.dataBase,self.name,argsDic)
         # We still need to fill that table with the correct values
         self.__addTuples()
 
 
+    
 
 
 
@@ -96,8 +103,18 @@ class Rename(Expression):
     # Rename("OldArg", "NewArg", Rel)
     # = Rename in Rel, OldArg to NewArg
 
+
+    # UTILISER DES ALIAS POUR DES COLONNES MDRRRRRR
+
     def __init__(self, oldArgu: str, newArgu: str, rel: Relation) -> None:
-        super().__init__(rel, None, None)
+        #Calls the parent constructor
+        if(isinstance(rel,Expression)):
+            print("isExpression")
+            super().__init__(rel.newRel,None,None,False)
+        elif(isinstance(rel,Relation)):
+            super().__init__(rel,None,None)
+        else:
+            raise Exception("The relation argument must be an SPJRUD expression or a relation")
         
         # First we check if the old argument exist in the old rel
         self.__checkOldArg(oldArgu,newArgu)
@@ -113,6 +130,8 @@ class Rename(Expression):
         self.newRel = self.__createRelation()
         # ex: 
         # ALTER TABLE STOCK RENAME COLUMN Qty TO Quantity
+
+        self.querry = self.__createQuerry()
 
     def __checkOldArg(self,oldArg,newArg):
         if (len(oldArg) == 0 or len(newArg) == 0):
@@ -150,5 +169,16 @@ class Rename(Expression):
             R.addTuple(self.oldRel.c.fetchone())
 
         return R
+
+    def __createQuerry(self) -> str:
+        # Ex : 
+        return "HI"
         
 
+    # RENAME(PROJECT)
+    # SELECT W ware, PRODUCT FROM STOCK;
+
+    # PROJECT(ware, RENAME)
+    # SELECT W ware, (tous les arg de stock) FROM STOCK
+    
+    # SELECT W ware FROM STOCK

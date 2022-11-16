@@ -211,11 +211,26 @@ class Relation:
                     keys[keysList[j]] = wordLen
         return keys
     
+
+    # ____________________________________________GETTER_________________________________________________
     # ATTENTION IT USES AN EXECUTE METHOD
     def getNbOfTuple(self) -> int:
         self.c.execute("SELECT COUNT(*) FROM " + self.name)
 
         return self.c.fetchone()[0]
+    
+    def getName(self) -> str:
+        return self.name
+    
+    def getDataBase(self) -> str:
+        return self.dataBase
+    
+    def getCursor(self) :
+        return self.c
+
+    def getArgs(self) -> dict:
+        return self.args
+
         
      
 
