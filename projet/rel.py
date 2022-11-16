@@ -5,16 +5,16 @@ from sqliteEnum import SqliteTypes as sType
 class Relation:
     def __init__(self,database: str,name: str, args: dict):
                
-        self.name = name                        # The name of the relation
+        self.__name = name                        # The name of the relation
         
-        self.dataBase = database
+        self.__dataBase = database
 
-        self.conn = sqlite3.connect(database)   # Links to the given database
+        self.__conn = sqlite3.connect(database)   # Links to the given database
 
-        self.c = self.conn.cursor()             # Gets the cursor so we can do some sqlite queries
-        
+        self.__c = self.__conn.cursor()             # Gets the cursor so we can do some sqlite queries
+        self.__nbOfTuple = 0
         self.__createArgs(args)
-        
+        self.__conn.close()
     
         
     # "__" means private function 
@@ -24,7 +24,7 @@ class Relation:
         if (not isinstance(dicoArg,dict) or len(dicoArg) == 0 ):
             raise Exception("args must be a dictionary with a least one element")
         
-        self.args = dicoArg
+        self.__args = dicoArg
         #Create the string that will be added in the sql querry to add arguments in the table
         str = ""
         allArgs = ""
@@ -39,28 +39,28 @@ class Relation:
         
 
         #Create the querry to create 
-        querry = "CREATE TABLE " + self.name + str
+        querry = "CREATE TABLE " + self.__name + str
         # If there is an error, this means the table already exist, so we replace the old one
         try:
-            self.c.execute(querry)
+            self.__c.execute(querry)
             
         except:
             self.deleteRel()
-            self.c.execute(querry)
+            self.__c.execute(querry)
 
         
 
         
-        self.conn.commit()
+        self.__conn.commit()
 
         
-        
+    
         
         
     # Deletes the relation 
     def deleteRel(self):
-        self.c.execute("DROP TABLE " + self.name)
-        self.conn.commit()
+        self.__c.execute("DROP TABLE " + self.__name)
+        self.__conn.commit()
         
    
     # Check if the argument are of the correct type for their attribute
@@ -70,12 +70,12 @@ class Relation:
     #       ex: (1, "a", int, float) : "a" should be an integer or a float
     
     def checkTuple(self,tup : tuple):
-        if(not len(tup) == len(self.args)):
+        if(not len(tup) == len(self.__args)):
             return 0
         
         index = 0
-        for key in self.args:
-            arg = self.args[key]
+        for key in self.__args:
+            arg = self.__args[key]
             # Type primitif à tester : str, int, float and None
             # We can skip the rest
             
@@ -107,23 +107,29 @@ class Relation:
     #reste a faire : def addTuple()
     # Return the SQLite querry as a string
     def addTuple(self,tup: tuple) -> str:
-        
+        conn = sqlite3.connect(self.__dataBase)
+
+        c =  conn.cursor()
+
         # A tuple needs to be the same length than the number of Arguments
         check = self.checkTuple(tup)
         
+        
+        
 
         if isinstance(check,tuple):
-            res = "Argument " + str(check[0]) + " not matching with the relation " + self.name + " ,\n" + str(check[1]) + " should be :" + str(check[2])
+            res = "Argument " + str(check[0]) + " not matching with the relation " + self.__name + " ,\n" + str(check[1]) + " should be :" + str(check[2])
             if (len(check) > 3):
                 res += " or " + str(check[3])
             raise Exception(res)
 
         elif(check == 0):
-            raise Exception("The tuple must have same number of arguments than in " + self.name + " , in this case: " + str(len(self.args)))
+            raise Exception("The tuple must have same number of arguments than in " + self.__name + " , in this case: " + str(len(self.__args)))
         # The tuple is okay, but we still need to check if it isn't already in the table
         # Since the table cannot have duplicates, if it throws an error it will mean that the tuple already exist in this relation
-        querry = "INSERT INTO "+ self.name +" VALUES "
+        querry = "INSERT INTO "+ self.__name +" VALUES "
         tupStr = ""
+        
         if (len(tup) == 1):
             if(isinstance(tup[0],str)):
                 tupStr += '("'+str(tup[0])+'")'
@@ -135,23 +141,28 @@ class Relation:
         querry += tupStr
         
         try:
-            self.c.execute(querry)
-            self.conn.commit()
-        except:
-            raise Exception("The tuple "+ str(tupStr) +" already exist in " + self.name)
+            c.execute(querry)
+            self.__nbOfTuple += 1
+            conn.commit()
+        except Exception as e:
+            print(e)
+            #raise Exception("The tuple "+ str(tupStr) +" already exist in " + self.name)
         
-        self.conn.commit()
+        conn.commit()
+        conn.close()
         return querry
         
         
      
     # Print the table in a cool way
     def __str__(self):
-        res = self.name + "|"
-        keys = self.__getMaxWordsLen()
+        conn = sqlite3.connect(self.__dataBase)
+        c = conn.cursor()
+        res = self.__name + "|"
+        keys = self.__getMaxWordsLen(c)
         
         keysList = []
-        for key in self.args:
+        for key in self.__args:
             keysList.append(key) 
         
         nbOfArg = len(keys)
@@ -164,9 +175,9 @@ class Relation:
         
         # Print the second line:
 
-        lineSize = len(res) - len(self.name) - 1
+        lineSize = len(res) - len(self.__name) - 1
         res += "\n"
-        res += " " * len(self.name) + "|"
+        res += " " * len(self.__name) + "|"
         res +="-"* lineSize + "\n"
 
         # Print all the other line/ tuples:
@@ -174,22 +185,22 @@ class Relation:
         # Count the number of tuple
         nbOfTup = self.getNbOfTuple()
         # Seleect all the tuple
-        self.c.execute("SELECT * FROM " + self.name)
+        c.execute("SELECT * FROM " + self.__name)
         for i in range(nbOfTup):
-            res += " " * len(self.name) + "| "
-            tup = self.c.fetchone()
+            res += " " * len(self.__name) + "| "
+            tup = c.fetchone()
             for j in range(nbOfArg):
                 res += str(tup[j]) + " "*(keys[keysList[j]] - len(str(tup[j]))) + "  | " 
             
             res += "\n"
-
+        conn.close()
         return res
 
     # Return a dict that has for each arg the max length for the word
-    def __getMaxWordsLen(self) -> dict:
+    def __getMaxWordsLen(self,c: sqlite3.Cursor) -> dict:
         keys = {}
         keysList = []
-        for key in self.args:
+        for key in self.__args:
             keys[key] = len(key)
             keysList.append(key) 
         
@@ -199,11 +210,11 @@ class Relation:
         # Count the number of tuple
         nbOfTup = self.getNbOfTuple()
         # Get all tuple
-        self.c.execute("SELECT * FROM " + self.name)
+        c.execute("SELECT * FROM " + self.__name)
 
         # For all tuples
         for  i in range(nbOfTup):
-            tup = self.c.fetchone()
+            tup = c.fetchone()
             for j in range(nbOfArg):
                 wordLen = len(str(tup[j]))
                 
@@ -215,23 +226,22 @@ class Relation:
     # ____________________________________________GETTER_________________________________________________
     # ATTENTION IT USES AN EXECUTE METHOD
     def getNbOfTuple(self) -> int:
-        self.c.execute("SELECT COUNT(*) FROM " + self.name)
-
-        return self.c.fetchone()[0]
+        return self.__nbOfTuple
     
     def getName(self) -> str:
-        return self.name
+        return self.__name
     
     def getDataBase(self) -> str:
-        return self.dataBase
+        return self.__dataBase
     
-    def getCursor(self) :
-        return self.c
+    def getCursor(self) -> sqlite3.Cursor :
+        return self.__c
 
     def getArgs(self) -> dict:
-        return self.args
+        return self.__args
 
         
+
      
 
 

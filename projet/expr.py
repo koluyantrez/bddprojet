@@ -1,5 +1,6 @@
 from rel import Relation
 
+
 # Every other class in this file is a child of the expression class stocking :
 # The new Relation
 # The old Relation
