@@ -15,3 +15,5 @@ class Expression():
     
     def __str__(self) -> str:
         return self.querry
+
+

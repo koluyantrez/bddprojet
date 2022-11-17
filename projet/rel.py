@@ -145,8 +145,8 @@ class Relation:
             self.__nbOfTuple += 1
             conn.commit()
         except Exception as e:
-            print(e)
-            #raise Exception("The tuple "+ str(tupStr) +" already exist in " + self.name)
+
+            raise Exception("The tuple "+ str(tupStr) +" already exist in " + self.name)
         
         conn.commit()
         conn.close()

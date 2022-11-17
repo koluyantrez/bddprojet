@@ -13,6 +13,7 @@ class Rename(Expression):
             super().__init__(rel.newRel,None,None,False)
             # We initialize the basic attributes: newName, oldArg, newArg  and Relation
             self.__initialisation(oldArgu,newArgu,self.oldRel)
+            self.querry = self.__fusionQuerries(rel)
 
         # If it's a relation then
         # We will just create an sql querry
@@ -93,6 +94,19 @@ class Rename(Expression):
 
         return querry 
 
+    def __fusionQuerries(self, expr: Expression):
+        # Ex SELECT NrEmp, Dept AS DEPART, Pourcent FROM EMPLOYE: 
+        querry = "SELECT "
+        # Add to the str all the key but add AS new key when we find the old one
+        for key in self.oldRel.getArgs():
+            if (key != self.oldArg):
+                querry += key + ", "
+            else:
+                querry += key + " AS " + self.newArg + ", "
+        querry = querry[0:len(querry)-2]
+        querry += " FROM \n\t" + "(" +expr.querry + ")" + " AS " + self.newRel.getName() 
+        return querry
+
 # ___________________________________________________________________________________________________
 class Project(Expression):
     def __init__(self,args: tuple, rel) -> None:
@@ -105,6 +119,7 @@ class Project(Expression):
             super().__init__(rel.newRel,None,None,False)
             # We initialize the basic attributes: newName, oldArg, newArg  and Relation
             self.__initialisation(args,self.oldRel)
+            self.querry = self.__fusionQuerries(rel)
 
         # If it's a relation then
         # We will just create an sql querry
@@ -127,8 +142,7 @@ class Project(Expression):
         # If it's only one expression we can juste create a basic querry
         if(self.isOneExp):
             self.querry = querry
-        else:
-            self.querry = self.__modifyQuerry()
+
 
         self.__addTuples(querry)
 
@@ -156,8 +170,16 @@ class Project(Expression):
 
         querry = "SELECT " + argStr + " FROM " + self.oldRel.getName()
         return querry
-    def __modifyQuerry(self) -> str:
-        return None
+
+    def __fusionQuerries(self, expr: Expression):
+        # SELECT ARG1,ARG2,...,ARGn FROM RELNAME;
+        argStr = self.__argsToString(self.newRel.getArgs())
+        # Ex SELECT NrEmp, Dept AS DEPART, Pourcent FROM EMPLOYE: 
+        querry = "SELECT " + argStr
+        
+        querry += " FROM \n\t" + "(" +expr.querry + ")" + " AS " + self.newRel.getName() 
+        return querry
+
     
     # Return the arguments as strings
     def __argsToString(self,args)-> str:
@@ -189,3 +211,5 @@ class Project(Expression):
                 # Copie les arguments et leurs types
                 argDic[arg] = relArgs[arg]
         return argDic
+
+
