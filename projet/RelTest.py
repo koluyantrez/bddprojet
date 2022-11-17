@@ -5,13 +5,16 @@ from relationsForTesting import STOCK
 from relationsForTesting import EMPLOYE
 from relationsForTesting import DEPARTEMENT
 from PRD import Rename
+from PRD import Project
 
 
 # Project( (tuple d'arg), Relation  ) -> Nouvelle relation
 
 print(EMPLOYE)
-R = Rename("NrEmp","Numero",EMPLOYE)
-print(R)
+
+R = Project(("W",),WAREHOUSES)
+
+print(R.querry)
 
 #Idée d'ajout pour rel: check if argument is ok for sqlite
 
