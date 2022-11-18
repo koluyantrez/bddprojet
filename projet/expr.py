@@ -16,4 +16,9 @@ class Expression():
     def __str__(self) -> str:
         return self.querry
 
-
+    # Return the arguments as strings
+    def _argsToString(self,args)-> str:
+        argStr = ""
+        for arg in args:
+            argStr += arg + ","
+        return argStr[0:len(argStr)-1]

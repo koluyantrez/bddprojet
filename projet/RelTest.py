@@ -6,7 +6,7 @@ from relationsForTesting import EMPLOYE
 from relationsForTesting import DEPARTEMENT
 from PRD import Rename
 from PRD import Project
-
+from PRD import Diff
 
 # Project( (tuple d'arg), Relation  ) -> Nouvelle relation
 
@@ -23,19 +23,15 @@ print(WAREHOUSES)
 #print(res)
 #print(R.newRel)
 
-S = Project(("Address",),
-        Project(("Address","W"),WAREHOUSES))
-R = Rename("Address","ADDD",S)
 
-c = EMPLOYE.getCursor()
-c.execute(R.querry)
-res = c.fetchall()
-EMPLOYE.killCursor()
-print(res)
-print(R)
+R = Project(("NrEmp",),EMPLOYE)
+S = Project(("Chef",),DEPARTEMENT)
+U = Rename("Chef","NrEmp",S)
 
 
+T = Diff(R,U.newRel)
 #Idée d'ajout pour rel: check if argument is ok for sqlite
 
 
+print(T.newRel)
 

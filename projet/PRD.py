@@ -133,7 +133,7 @@ class Project(Expression):
         # We check the arguments given
         argsDic = self.__checkArgs(args)
         # We create the new name
-        argStr = self.__argsToString(argsDic).replace(",","")
+        argStr = self._argsToString(argsDic).replace(",","")
         name = "ProjectOf_" + argStr + "_From" + self.oldRel.getName()
         # We create the new relation
         self.newRel = Relation(self.oldRel.getDataBase(),name,argsDic)
@@ -166,27 +166,21 @@ class Project(Expression):
 
     def __createNewQuerry(self) -> str:
         # SELECT ARG1,ARG2,...,ARGn FROM RELNAME;
-        argStr = self.__argsToString(self.newRel.getArgs())
+        argStr = self._argsToString(self.newRel.getArgs())
 
         querry = "SELECT " + argStr + " FROM " + self.oldRel.getName()
         return querry
 
     def __fusionQuerries(self, expr: Expression):
         # SELECT ARG1,ARG2,...,ARGn FROM RELNAME;
-        argStr = self.__argsToString(self.newRel.getArgs())
+        argStr = self._argsToString(self.newRel.getArgs())
         # Ex SELECT NrEmp, Dept AS DEPART, Pourcent FROM EMPLOYE: 
         querry = "SELECT " + argStr
         
         querry += " FROM \n\t" + "(" +expr.querry + ")" + " AS " + self.newRel.getName() 
         return querry
 
-    
-    # Return the arguments as strings
-    def __argsToString(self,args)-> str:
-        argStr = ""
-        for arg in args:
-            argStr += arg + ","
-        return argStr[0:len(argStr)-1]
+
 
     
     # Returns the argument wanted if nothing is wrong
@@ -211,5 +205,79 @@ class Project(Expression):
                 # Copie les arguments et leurs types
                 argDic[arg] = relArgs[arg]
         return argDic
+
+#_______________________________________________________________________________________________________________________
+
+class Diff(Expression):
+    # Diff(rel1,rel2) = SELECT * FROM REL1 EXCEPT SELECT * FROM REL2
+    # i.e Rel1 @minus Rel2
+    # Verifier que relation 1 et relation 2 ont les même args
+    # 
+    def __init__(self,rel1: Relation, rel2: Relation):
+        # 4 cas possibles:
+        # rel1 est une expression et rel2 aussi
+        if (isinstance(rel1,Expression) and isinstance(rel2,Expression)):
+            super().__init__(rel1.newRel,None,None,False)
+            self.__initialisation(rel1.newRel,rel2.newRel)
+            self.querry = self.__fusionQuerries(rel1.querry,rel2.querry)
+
+        # rel1 est une relation et rel2 une expression
+        elif (isinstance(rel1,Relation) and isinstance(rel2,Expression)):
+            super().__init__(rel1,None,None,False)
+            self.__initialisation(rel1,rel2.newRel)
+            self.querry = self.__fusionQuerries(rel1.getName(),rel2.querry)
+
+        # rel1 est une expression et rel2 une relation
+        elif (isinstance(rel1,Expression) and isinstance(rel2,Relation)):
+            super().__init__(rel1.newRel,None,None)
+            self.__initialisation(rel1.newRel,rel2)
+            self.querry = self.__fusionQuerries(rel1.querry,rel2.getName())
+        
+        # rel1 est une relation et rel2 aussi
+        elif (isinstance(rel1,Relation) and isinstance(rel2,Relation)):
+            super().__init__(rel1,None,None)
+            self.__initialisation(rel1,rel2)
+            # la querry est ajouter dans __initialisation()
+
+
+    
+
+        
+    def __initialisation(self, rel1: Relation, rel2: Relation):
+        # We check the arguments given
+        self.__checkArgs(rel1,rel2)
+        # We create the new name
+
+        name = "DiffOf_" + rel1.getName() + "_BY_" + rel2.getName()
+        
+        # We create the new relation
+        self.newRel = Relation(rel1.getDataBase(),name,rel1.getArgs())
+
+        # We create the basic querry
+        querry = "SELECT * FROM " + rel1.getName() + " EXCEPT " + "SELECT * FROM " + rel2.getName()
+        self.__addTupples(querry)
+        
+        if(self.isOneExp):
+            self.querry = querry
+
+
+    def __checkArgs(self,rel1: Relation, rel2: Relation):
+        # We need to check if both relations have the same arguments before moving any futher
+        if (not rel1.getArgs() == rel2.getArgs()):
+            raise Exception("Difference not possible"
+                            +" because " + rel1.getName() + " does not have the same args than "+ rel2.getName())
+            
+    
+    def __addTupples(self, querry: str):
+        cursor = self.newRel.getCursor()
+        cursor.execute(querry)
+        tuples = cursor.fetchall()
+        self.newRel.killCursor()
+        for tup in tuples:
+            self.newRel.addTuple(tup)
+
+    def __fusionQuerries(self, q1: str, q2: str) -> str:
+        querry = "SELECT * FROM (" + q1 + ") AS rel1" + " EXCEPT SELECT * FROM (" + q2 + ") AS rel2" 
+        return querry
 
 
