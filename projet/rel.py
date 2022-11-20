@@ -1,4 +1,5 @@
 import sqlite3
+import os
 from sqliteEnum import SqliteTypes as sType
 
 
@@ -252,6 +253,22 @@ class Relation:
 
         
 
-     
+#Return True if the relation exist in the database, False otherwise
+# relName: The name of the relation checked
+# database: the path to the database being checked
+def isInDatabase(relName: str, database: str):
+    path = database
+    isExist = os.path.exists(path)
+    if (not isExist):
+        raise FileNotFoundError("The file " + database +" has not been found.")
+    isIn = True
+    conn = sqlite3.connect(database)
+    c = conn.cursor()
+    try:
+        c.execute("SELECT * FROM " + relName)
+    except:
+        isIn = False
+    conn.close()
+    return isIn
 
 
