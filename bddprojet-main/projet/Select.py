@@ -10,11 +10,26 @@ class Select(Expression):
 	
 	def __init__(self, ope: Expression)-> None:
 		
-		__checkOpe(self,ope),
+		#Call the parent constructor
+
+        # If it's an expression then 
+        # we just mention that the sql querry is going
+        # to be modified instead of created
+        if (isinstance(rel,Expression)):
+            super().__init__(rel.newRel,None,None,True)
+            # We initialize the basic attributes: newName, oldArg, newArg  and Relation
+            self.__initialisation(oldArgu,newArgu,self.oldRel)
+
+        # If it's a relation then
+        # We will just create an sql querry
+        elif(isinstance(rel,Relation)):
+            super().__init__(rel,None,None)
+            # We initialize the basic attributes: newName, oldArg, newArg and Relation
+            self.__initialisation(oldArgu,newArgu,rel)
+            self.querry = self.__createNewQuerry()
 		
-		super().__init__(rel,None,None)
+		__checkOpe(self,ope)
 		self.ope=ope
-		
 		self.newName = str(self.ope)
 	
 	def __checkOpe(self,ope):
