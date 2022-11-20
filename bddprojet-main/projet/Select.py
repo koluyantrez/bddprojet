@@ -17,22 +17,22 @@ class Select(Expression):
         	# to be modified instead of created
         	if (isinstance(rel,Expression)):
         	    super().__init__(rel.newRel,None,None,True)
-        	    # We initialize the basic attributes: newName, oldArg, newArg  and Relation
-        	    self.__initialisation(oldArgu,newArgu,self.oldRel)
+        	    # We initialize the basic attributes: ope and Relation
+        	    self.__initialisation(ope,self.rel)
 	
         	# If it's a relation then
         	# We will just create an sql querry
         	elif(isinstance(rel,Relation)):
         	    super().__init__(rel,None,None)
-        	    # We initialize the basic attributes: newName, oldArg, newArg and Relation
-        	    self.__initialisation(oldArgu,newArgu,rel)
+        	    # We initialize the basic attributes: ope and Relation
+        	    self.__initialisation(ope,self.rel)
         	    self.querry = self.__createNewQuerry()
 		
 		__checkOpe(self,ope)
 		self.ope=ope
 		self.newName = str(self.ope)
 	
-	def __initialisation(self,key,value,rel : Relation):
+	def __initialisation(self,ope,rel : Relation):
             self.__checkArgCompare(key,value)
             self.key = key
             self.value = value
