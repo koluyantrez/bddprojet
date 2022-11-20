@@ -9,28 +9,39 @@ class Select(Expression):
 	# exemple : Select(Neq(’Country’, 'Mali’),'CC') = S_Country="Mali" (CC)
 	
 	def __init__(self, ope: Expression)-> None:
-		
-		#Call the parent constructor
-
-        # If it's an expression then 
-        # we just mention that the sql querry is going
-        # to be modified instead of created
-        if (isinstance(rel,Expression)):
-            super().__init__(rel.newRel,None,None,True)
-            # We initialize the basic attributes: newName, oldArg, newArg  and Relation
-            self.__initialisation(oldArgu,newArgu,self.oldRel)
-
-        # If it's a relation then
-        # We will just create an sql querry
-        elif(isinstance(rel,Relation)):
-            super().__init__(rel,None,None)
-            # We initialize the basic attributes: newName, oldArg, newArg and Relation
-            self.__initialisation(oldArgu,newArgu,rel)
-            self.querry = self.__createNewQuerry()
+			
+			#Call the parent constructor
+	
+        	# If it's an expression then 
+        	# we just mention that the sql querry is going
+        	# to be modified instead of created
+        	if (isinstance(rel,Expression)):
+        	    super().__init__(rel.newRel,None,None,True)
+        	    # We initialize the basic attributes: newName, oldArg, newArg  and Relation
+        	    self.__initialisation(oldArgu,newArgu,self.oldRel)
+	
+        	# If it's a relation then
+        	# We will just create an sql querry
+        	elif(isinstance(rel,Relation)):
+        	    super().__init__(rel,None,None)
+        	    # We initialize the basic attributes: newName, oldArg, newArg and Relation
+        	    self.__initialisation(oldArgu,newArgu,rel)
+        	    self.querry = self.__createNewQuerry()
 		
 		__checkOpe(self,ope)
 		self.ope=ope
 		self.newName = str(self.ope)
+	
+	def __initialisation(self,key,value,rel : Relation):
+            self.__checkArgCompare(key,value)
+            self.key = key
+            self.value = value
+
+            #We create the new name
+            self.newName = "SelectionBetween_" + key + "And" + value + "_From" + rel.getName()
+
+            # We create the relation/ table
+            self.newRel = self.__createRelation()
 	
 	def __checkOpe(self,ope):
 		if (len(ope) == 0):
