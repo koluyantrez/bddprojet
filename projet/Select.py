@@ -50,9 +50,6 @@ class Select(Expression):
 	def __checkArgCompare(self,key,val):
 		if(not self.rel.args.__contains__(key)):
 			raise Exception("The relation "+self.rel.name+" don't have key called \""+key+"\"")
-		try:
-			float(val)
-
 
 class Eq(Select):
 	#Eq("Attribut","Value",rel) = \sigma_{'Attribut'=Value}(rel)
