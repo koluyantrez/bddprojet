@@ -22,3 +22,19 @@ class Expression():
         for arg in args:
             argStr += arg + ","
         return argStr[0:len(argStr)-1]
+
+    def _addTupples(self, querry: str):
+        # We add all the tuples
+        cursor = self.newRel.getCursor()
+        cursor.execute(querry)
+        tuples = cursor.fetchall()
+        self.newRel.killCursor()
+        for tup in tuples:
+            try:
+                self.newRel.addTuple(tup)
+            except Exception as e:
+                # Generally this exception is due to the unique constraint of the relation
+                # I.E : cannot add the same tuple
+                pass
+
+

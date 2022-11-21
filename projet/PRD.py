@@ -144,22 +144,9 @@ class Project(Expression):
             self.querry = querry
 
 
-        self.__addTuples(querry)
+        self._addTupples(querry)
 
-    def __addTuples(self,querry):
-        # We get a new cursor
-        cursor = self.oldRel.getCursor()
-        cursor.execute(querry)
-        tuples = cursor.fetchall()
-        # We kill the curent cursor
-        self.oldRel.killCursor()
-        for tup in tuples:
-            try:
-                self.newRel.addTuple(tup)
-            except Exception as e:
-                # Generally this exception is due to the unique constraint of the relation
-                # I.E : cannot add the same tuple
-                pass
+    
 
 
 
@@ -255,7 +242,7 @@ class Diff(Expression):
 
         # We create the basic querry
         querry = "SELECT * FROM " + rel1.getName() + " EXCEPT " + "SELECT * FROM " + rel2.getName()
-        self.__addTupples(querry)
+        self._addTupples(querry)
         
         if(self.isOneExp):
             self.querry = querry
@@ -268,13 +255,7 @@ class Diff(Expression):
                             +" because " + rel1.getName() + " does not have the same args than "+ rel2.getName())
             
     
-    def __addTupples(self, querry: str):
-        cursor = self.newRel.getCursor()
-        cursor.execute(querry)
-        tuples = cursor.fetchall()
-        self.newRel.killCursor()
-        for tup in tuples:
-            self.newRel.addTuple(tup)
+
 
     def __fusionQuerries(self, q1: str, q2: str) -> str:
         querry = "SELECT * FROM (" + q1 + ") AS rel1" + " EXCEPT SELECT * FROM (" + q2 + ") AS rel2" 
