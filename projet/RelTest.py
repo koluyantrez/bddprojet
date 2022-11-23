@@ -1,32 +1,37 @@
 from rel import Relation
 from rel import isInDatabase
 from sqliteEnum import SqliteTypes as sType
-from relationsForTesting import WAREHOUSES
-from relationsForTesting import STOCK
-from relationsForTesting import EMPLOYE
-from relationsForTesting import DEPARTEMENT
+import relationsForTesting as r
 
 from PRD import Rename
 from PRD import Project
 from PRD import Diff
-from join import Join
+from SJU import Join
+from SJU import Select
 
 # Project( (tuple d'arg), Relation  ) -> Nouvelle relation
 
-print(WAREHOUSES)
 
+A = Rename("Chef","Emp",r.DEPARTEMENTS)
 
-T = Project(("W"),WAREHOUSES)
-S = Project(("W","Product"),STOCK)
+print(A.newRel)
 
+B = Project(("Dept","Emp"),r.EMPLOYES)
 
-R = Join(STOCK,WAREHOUSES)
+print(B.newRel)
 
-c = R.newRel.getCursor()
-c.execute(str(R))
-print(c.fetchall())
+C = Diff(B,A)
 
-R.newRel.killCursor()
+D = Project(("Emp",),C)
+print(D.newRel)
+res = Diff(
+    Project(("Emp",),A),
+    D
+)
 
-print(R.newRel)
+print(res.newRel)
 
+cursor = res.newRel.getCursor()
+cursor.execute(res.querry)
+print(cursor.fetchall())
+res.newRel.killCursor()

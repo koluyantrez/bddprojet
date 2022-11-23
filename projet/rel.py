@@ -256,7 +256,7 @@ class Relation:
 #Return True if the relation exist in the database, False otherwise
 # relName: The name of the relation checked
 # database: the path to the database being checked
-def isInDatabase(relName: str, database: str):
+def isInDatabase(relName: str, database: str) -> bool:
     path = database
     isExist = os.path.exists(path)
     if (not isExist):

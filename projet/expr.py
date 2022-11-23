@@ -32,6 +32,7 @@ class Expression():
         for tup in tuples:
             try:
                 self.newRel.addTuple(tup)
+                
             except Exception as e:
                 # Generally this exception is due to the unique constraint of the relation
                 # I.E : cannot add the same tuple

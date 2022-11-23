@@ -47,6 +47,22 @@ DEPARTEMENT.addTuple(("Bio",3500,"E1"))
 DEPARTEMENT.addTuple(("Eco",4000,"E5"))
 
 
+args = {"Emp": sType.TEXT,"Dept": sType.TEXT, "Depuis": sType.TEXT}
+EMPLOYES = Relation("relationdata.db","EMPLOYES",args)
+
+EMPLOYES.addTuple(("Ed","Jeux","8 jan 1982"))
+EMPLOYES.addTuple(("Ed","MIS","11 jan 1997"))
+EMPLOYES.addTuple(("An","Jeux","13 sep 2001"))
+EMPLOYES.addTuple(("Pierre","MIS","23 oct 1992"))
+EMPLOYES.addTuple(("Pierre","Jeux","11 nov 1995"))
+
+args = {"Dept": sType.TEXT,"Chef": sType.TEXT}
+DEPARTEMENTS = Relation("relationdata.db","DEPARTEMENTS",args)
+
+DEPARTEMENTS.addTuple(("Jeux","An"))
+DEPARTEMENTS.addTuple(("MIS","Pierre"))
+
+
 
 
 

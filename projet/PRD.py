@@ -35,6 +35,8 @@ class Rename(Expression):
 
             # We create the relation/ table
             self.newRel = self.__createRelation()
+            
+
 
 
     def __checkArgs(self,oldArg,newArg):
@@ -75,6 +77,7 @@ class Rename(Expression):
         self.oldRel.killCursor()
         for i in range(nbOfTup):
             R.addTuple(tup[i])
+        
         
         return R
 
@@ -206,19 +209,19 @@ class Diff(Expression):
         if (isinstance(rel1,Expression) and isinstance(rel2,Expression)):
             super().__init__(rel1.newRel,None,None,False)
             self.__initialisation(rel1.newRel,rel2.newRel)
-            self.querry = self.__fusionQuerries(rel1.querry,rel2.querry)
+            self.querry = self.__fusionQuerries(rel1.querry,rel2.querry,rel1.newRel.getArgs())
 
         # rel1 est une relation et rel2 une expression
         elif (isinstance(rel1,Relation) and isinstance(rel2,Expression)):
             super().__init__(rel1,None,None,False)
             self.__initialisation(rel1,rel2.newRel)
-            self.querry = self.__fusionQuerries(rel1.getName(),rel2.querry)
+            self.querry = self.__fusionQuerries(rel1.getName(),rel2.querry,rel1.getArgs())
 
         # rel1 est une expression et rel2 une relation
         elif (isinstance(rel1,Expression) and isinstance(rel2,Relation)):
             super().__init__(rel1.newRel,None,None)
             self.__initialisation(rel1.newRel,rel2)
-            self.querry = self.__fusionQuerries(rel1.querry,rel2.getName())
+            self.querry = self.__fusionQuerries(rel1.querry,rel2.getName(),rel1.newRel.getArgs())
         
         # rel1 est une relation et rel2 aussi
         elif (isinstance(rel1,Relation) and isinstance(rel2,Relation)):
@@ -233,6 +236,7 @@ class Diff(Expression):
     def __initialisation(self, rel1: Relation, rel2: Relation):
         # We check the arguments given
         self.__checkArgs(rel1,rel2)
+
         # We create the new name
 
         name = "DiffOf_" + rel1.getName() + "_BY_" + rel2.getName()
@@ -241,11 +245,13 @@ class Diff(Expression):
         self.newRel = Relation(rel1.getDataBase(),name,rel1.getArgs())
 
         # We create the basic querry
-        querry = "SELECT * FROM " + rel1.getName() + " EXCEPT " + "SELECT * FROM " + rel2.getName()
+        querry = "SELECT "+ self._argsToString(rel1.getArgs()) + " FROM " + rel1.getName() + " EXCEPT " + "SELECT "+ self._argsToString(rel1.getArgs()) + " FROM " + rel2.getName()
+        self.__createQuerry(rel1,rel2)
         self._addTupples(querry)
-        
+
         if(self.isOneExp):
             self.querry = querry
+        
 
 
     def __checkArgs(self,rel1: Relation, rel2: Relation):
@@ -253,12 +259,18 @@ class Diff(Expression):
         if (not rel1.getArgs() == rel2.getArgs()):
             raise Exception("Difference not possible"
                             +" because " + rel1.getName() + " does not have the same args than "+ rel2.getName())
+        
             
     
+    def __createQuerry(self,rel1: Relation, rel2:Relation) -> str:        
+        arg1 = self._argsToString(rel1.getArgs())
+        arg2 = self._argsToString(rel2.getArgs())
+        
 
 
-    def __fusionQuerries(self, q1: str, q2: str) -> str:
-        querry = "SELECT * FROM (" + q1 + ") AS rel1" + " EXCEPT SELECT * FROM (" + q2 + ") AS rel2" 
+
+    def __fusionQuerries(self, q1: str, q2: str, arg1: dict) -> str:
+        querry = "SELECT "+ self._argsToString(arg1) + " FROM (" + q1 + ") AS rel1" + " EXCEPT SELECT "+ self._argsToString(arg1) +  " FROM (" + q2 + ") AS rel2" 
         return querry
 
 
