@@ -3,7 +3,7 @@ from sqliteEnum import SqliteTypes as sType
 from expr import Expression
 
 class Rename(Expression):
-    def __init__(self, oldArgu: str, newArgu: str, rel) -> None:
+    def __init__(self, oldArgu: str, newArgu: str, rel, name: str) -> None:
         #Call the parent constructor
 
         # If it's an expression then 
@@ -12,7 +12,7 @@ class Rename(Expression):
         if (isinstance(rel,Expression)):
             super().__init__(rel.newRel,None,None,False)
             # We initialize the basic attributes: newName, oldArg, newArg  and Relation
-            self.__initialisation(oldArgu,newArgu,self.oldRel)
+            self.__initialisation(oldArgu,newArgu,self.oldRel,name)
             self.querry = self.__fusionQuerries(rel)
 
         # If it's a relation then
@@ -20,19 +20,19 @@ class Rename(Expression):
         elif(isinstance(rel,Relation)):
             super().__init__(rel,None,None)
             # We initialize the basic attributes: newName, oldArg, newArg and Relation
-            self.__initialisation(oldArgu,newArgu,rel)
+            self.__initialisation(oldArgu,newArgu,rel,name)
             self.querry = self.__createNewQuerry()
 
             
     
-    def __initialisation(self,oldArgu,newArgu,rel : Relation):
+    def __initialisation(self,oldArgu,newArgu,rel : Relation, name: str):
             self.__checkArgs(oldArgu,newArgu)
             self.oldArg = oldArgu
             self.newArg = newArgu
 
             #We create the new name
-            self.newName = "RenameOf_" + oldArgu + "To" + newArgu + "_From" + rel.getName()
-
+            #self.newName = "RenameOf_" + oldArgu + "To" + newArgu + "_From" + rel.getName()
+            self.newName = name
             # We create the relation/ table
             self.newRel = self.__createRelation()
             
@@ -112,7 +112,7 @@ class Rename(Expression):
 
 # ___________________________________________________________________________________________________
 class Project(Expression):
-    def __init__(self,args: tuple, rel) -> None:
+    def __init__(self,args: tuple, rel, name: str) -> None:
         #Call the parent constructor
 
         # If it's an expression then 
@@ -121,23 +121,23 @@ class Project(Expression):
         if (isinstance(rel,Expression)):
             super().__init__(rel.newRel,None,None,False)
             # We initialize the basic attributes: newName, oldArg, newArg  and Relation
-            self.__initialisation(args,self.oldRel)
+            self.__initialisation(args,self.oldRel,name)
             self.querry = self.__fusionQuerries(rel)
 
         # If it's a relation then
         # We will just create an sql querry
         elif(isinstance(rel,Relation)):
-            super().__init__(rel,None,None)
+            super().__init__(rel,None,None,name)
             # We initialize the basic attributes: newName, oldArg, newArg and Relation
-            self.__initialisation(args,rel)
+            self.__initialisation(args,rel,name)
             self.querry = self.__createNewQuerry()
 
-    def __initialisation(self,args: dict, oldRel: Relation):
+    def __initialisation(self,args: dict, oldRel: Relation, name: str):
         # We check the arguments given
         argsDic = self.__checkArgs(args)
         # We create the new name
-        argStr = self._argsToString(argsDic).replace(",","")
-        name = "ProjectOf_" + argStr + "_From" + self.oldRel.getName()
+        #argStr = self._argsToString(argsDic).replace(",","")
+        #name = "ProjectOf_" + argStr + "_From" + self.oldRel.getName()
         # We create the new relation
         self.newRel = Relation(self.oldRel.getDataBase(),name,argsDic)
         # We fill this table
@@ -203,43 +203,43 @@ class Diff(Expression):
     # i.e Rel1 @minus Rel2
     # Verifier que relation 1 et relation 2 ont les même args
     # 
-    def __init__(self,rel1: Relation, rel2: Relation):
+    def __init__(self,rel1: Relation, rel2: Relation, name : str):
         # 4 cas possibles:
         # rel1 est une expression et rel2 aussi
         if (isinstance(rel1,Expression) and isinstance(rel2,Expression)):
             super().__init__(rel1.newRel,None,None,False)
-            self.__initialisation(rel1.newRel,rel2.newRel)
+            self.__initialisation(rel1.newRel,rel2.newRel,name)
             self.querry = self.__fusionQuerries(rel1.querry,rel2.querry,rel1.newRel.getArgs())
 
         # rel1 est une relation et rel2 une expression
         elif (isinstance(rel1,Relation) and isinstance(rel2,Expression)):
             super().__init__(rel1,None,None,False)
-            self.__initialisation(rel1,rel2.newRel)
+            self.__initialisation(rel1,rel2.newRel,name)
             self.querry = self.__fusionQuerries(rel1.getName(),rel2.querry,rel1.getArgs())
 
         # rel1 est une expression et rel2 une relation
         elif (isinstance(rel1,Expression) and isinstance(rel2,Relation)):
             super().__init__(rel1.newRel,None,None)
-            self.__initialisation(rel1.newRel,rel2)
+            self.__initialisation(rel1.newRel,rel2,name)
             self.querry = self.__fusionQuerries(rel1.querry,rel2.getName(),rel1.newRel.getArgs())
         
         # rel1 est une relation et rel2 aussi
         elif (isinstance(rel1,Relation) and isinstance(rel2,Relation)):
             super().__init__(rel1,None,None)
-            self.__initialisation(rel1,rel2)
+            self.__initialisation(rel1,rel2,name)
             # la querry est ajouter dans __initialisation()
 
 
     
 
         
-    def __initialisation(self, rel1: Relation, rel2: Relation):
+    def __initialisation(self, rel1: Relation, rel2: Relation, name: str):
         # We check the arguments given
         self.__checkArgs(rel1,rel2)
 
         # We create the new name
 
-        name = "DiffOf_" + rel1.getName() + "_BY_" + rel2.getName()
+        #name = "DiffOf_" + rel1.getName() + "_BY_" + rel2.getName()
         
         # We create the new relation
         self.newRel = Relation(rel1.getDataBase(),name,rel1.getArgs())

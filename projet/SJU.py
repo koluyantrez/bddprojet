@@ -6,56 +6,63 @@ from expr import Expression
 class Join(Expression):
     # Join(Rel1,Rel2)
 
-    def __init__(self, rel1: Relation, rel2: Relation):
+    def __init__(self, rel1: Relation, rel2: Relation, name: str):
             # 4 cas possibles:
         # rel1 est une expression et rel2 aussi
         if (isinstance(rel1,Expression) and isinstance(rel2,Expression)):
             super().__init__(rel1.newRel,None,None,False)
-            self.__initialisation(rel1.newRel,rel2.newRel)
+            self.__initialisation(rel1.newRel,rel2.newRel, name)
             self.querry = self.__fusionQuerries(rel1.querry,rel2.querry)
 
         # rel1 est une relation et rel2 une expression
         elif (isinstance(rel1,Relation) and isinstance(rel2,Expression)):
             super().__init__(rel1,None,None,False)
-            self.__initialisation(rel1,rel2.newRel)
+            self.__initialisation(rel1,rel2.newRel, name)
             self.querry = self.__fusionQuerries(rel1.getName(),rel2.querry)
 
         # rel1 est une expression et rel2 une relation
         elif (isinstance(rel1,Expression) and isinstance(rel2,Relation)):
             super().__init__(rel1.newRel,None,None,False)
-            self.__initialisation(rel1.newRel,rel2)
+            self.__initialisation(rel1.newRel,rel2, name)
             self.querry = self.__fusionQuerries(rel1.querry,rel2.getName())
         
         # rel1 est une relation et rel2 aussi
         elif (isinstance(rel1,Relation) and isinstance(rel2,Relation)):
             super().__init__(rel1,None,None)
-            self.__initialisation(rel1,rel2)
+            self.__initialisation(rel1,rel2,name)
             # la querry est ajouter dans __initialisation()
 
 
-    def __initialisation(self, rel1: Relation, rel2: Relation):
+    def __initialisation(self, rel1: Relation, rel2: Relation, name: str):
         # We don't have to check the arguments given since the join method doesn't need that
         self.oldRel2 = rel2
         
         # We do need to create the new dic containing the args
+        
         args = self.__createArgs()
         
         # We create the Name
-        name = "Joined"+rel1.getName()+"_AND_"+rel2.getName()
+        #name = "Joined"+rel1.getName()+"_AND_"+rel2.getName()
         # We create the relation
+        
+        
         self.newRel = Relation(rel1.getDataBase(),name,args)
         # We create the basic querry
         querry = "SELECT * FROM " + rel1.getName() + " NATURAL JOIN " + rel2.getName()
+        
+        
         self._addTupples(querry)
         # We can keep this querry if the expression is only one
         if self.isOneExp:
             self.querry = querry
         
     def __createArgs(self) -> dict:
-        args = self.oldRel.getArgs()
+        args = dict(self.oldRel.getArgs())
+        
         for key in self.oldRel2.getArgs():
             if(not args.__contains__(key)):
                 args[key] = self.oldRel2.getArgs()[key]
+        
         return args
 
 
@@ -69,27 +76,27 @@ class Join(Expression):
 class Select(Expression):
     __acceptedCondition = ('!=','<>','=','>','<','>=','<=')
 
-    def __init__(self,arg1,condition: str,arg2, rel) -> None:
+    def __init__(self,arg1,condition: str,arg2, rel, name: str) -> None:
         # Call the parent constructor
         # If rel is a Relation:
         if(isinstance(rel,Relation)):
             super().__init__(rel,None,None)
-            self.__initialisation(arg1,condition,arg2,rel)
+            self.__initialisation(arg1,condition,arg2,rel,name)
             
         elif(isinstance(rel,Expression)):
             super().__init__(rel.newRel,None,None,False)
-            self.__initialisation(arg1,condition,arg2,rel.newRel)
+            self.__initialisation(arg1,condition,arg2,rel.newRel,name)
             arg2 = self.__checkArg2(arg2,rel.newRel)
             self.querry = self.__fusionQuerry(rel,arg1,arg2,condition)
     
-    def __initialisation(self, arg1: str, condition: str, arg2: str, rel: Relation):
+    def __initialisation(self, arg1: str, condition: str, arg2: str, rel: Relation,name : str):
         # We check if arg1 is correct
         self.__checkArg1(arg1,rel)
         
         # We check the condition
         condition = self.__checkCondition(condition)
         # We create the new name
-        name = "Select_" + arg1  + arg2 + "_From" + rel.getName()
+        #name = "Select_" + arg1  + arg2 + "_From" + rel.getName()
         # We can check arg2
         arg2 = self.__checkArg2(arg2,rel)
 

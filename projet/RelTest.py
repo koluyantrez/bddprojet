@@ -12,26 +12,25 @@ from SJU import Select
 # Project( (tuple d'arg), Relation  ) -> Nouvelle relation
 
 
-A = Rename("Chef","Emp",r.DEPARTEMENTS)
+R = Rename("W","WARE",r.WAREHOUSES,"R")
+S = Project(("W",),r.STOCK,"S")
+E = Rename("W","WARE",S,"E")
+T = Join(E,R,"T")
 
-print(A.newRel)
+U = Select("WARE","=","D2",T,"U")
 
-B = Project(("Dept","Emp"),r.EMPLOYES)
+print(R.newRel)
 
-print(B.newRel)
 
-C = Diff(B,A)
+print(S.newRel)
 
-D = Project(("Emp",),C)
-print(D.newRel)
-res = Diff(
-    Project(("Emp",),A),
-    D
-)
+print(U.newRel)
 
-print(res.newRel)
 
-cursor = res.newRel.getCursor()
-cursor.execute(res.querry)
+cursor = U.newRel.getCursor()
+
+cursor.execute(U.querry)
+
 print(cursor.fetchall())
-res.newRel.killCursor()
+
+U.newRel.killCursor()
