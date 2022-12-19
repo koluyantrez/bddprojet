@@ -104,7 +104,7 @@ class Select(Expression):
         self.newRel = Relation(rel.getDataBase(),name,rel.getArgs())
         # We can add the tuples
         querry = "SELECT * FROM " + rel.getName() + " WHERE " + arg1 + " " + condition + " " + arg2
-        print(querry)
+
         self._addTupples(querry)
         
         if (self.isOneExp):

@@ -2,6 +2,8 @@ import sqlite3
 import os
 from sqliteEnum import SqliteTypes as sType
 
+# Will keep every relation created during the execution of the program
+_relCreated  = []
 
 class Relation:
     def __init__(self,database: str,name: str, args: dict):
@@ -16,7 +18,8 @@ class Relation:
         self.__nbOfTuple = 0
         self.__createArgs(args)
         self.__conn.close()
-    
+
+        _relCreated.append(self)
         
     # "__" means private function 
     def __createArgs(self,dicoArg):
@@ -251,6 +254,14 @@ class Relation:
     def getArgs(self) -> dict:
         return self.args
 
+# Gets the relation by name and that was created during the execution of the program
+# returns None if it wasn't found
+def getRelation(relName: str) -> Relation:
+    for i in range(len(_relCreated)):
+        if _relCreated[i].getName() == relName:
+            return _relCreated[i]
+    return None
+
         
 
 #Return True if the relation exist in the database, False otherwise
@@ -270,5 +281,4 @@ def isInDatabase(relName: str, database: str) -> bool:
         isIn = False
     conn.close()
     return isIn
-
 

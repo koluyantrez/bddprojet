@@ -9,7 +9,7 @@ def tokenize(sentence: str) -> list:
         if current == ' ':
             __addWord(word,wordList)
             word = ""
-        if not current.isalpha():
+        if not current.isalpha() and not current.isdigit():
             __addWord(word,wordList)
             __addWord(current,wordList)
             word = ""
@@ -23,3 +23,12 @@ def tokenize(sentence: str) -> list:
 def __addWord(word: str, liste: list):
     if len(word) != 0 and word != ' ':
         liste.append(word)
+
+def toString(tokens: list):
+    if (len(tokens) == 0):
+        raise Exception("The list size must be greater than 0")
+    res = ""
+    for i in range(len(tokens)):
+        res += tokens[i]
+    
+    return res
