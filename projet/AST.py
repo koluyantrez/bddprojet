@@ -3,35 +3,50 @@ import expr
 import rel
 import SJU
 import PRD
+import traceback
+import readline
 
 stopList = ["stop","close","exit","quit"]
-specialToken = ["let","print"]
 SPJRUDlist = ["select","project","join","rename","union","diff"]
 exprSyntax = {"select":"select[(arg1,condition,arg2),relation/expression]","project" : "project[(arg1,arg2,...,argN),relation/expression]",
                "rename" : "rename[(oldArg,newArg),relation/expression]", "join": "join[relation/{expression1},relation/{expression2}]",
-               "union": "union[relation/expression1,relation/expression2]", "difference" : "diff[relation/expression1,relation/expression2]"}
+               "union": "union[relation/{expression1},relation/{expression2}]", "difference" : "diff[relation/{expression1},relation/{expression2}]"}
 
 def readUserQuery(database : str):
     print("USING: " + database)
     while(True):
+        print("> ",end="")
         query = input()
-        if stopList.__contains__(query):
+        if stopList.__contains__(query.lower()):
             break
         elif query.upper() == "HELP":
             printHelp()
-        #tokens = tokenizer.tokenize("select[(W,=,D1),project[(W),WAREHOUSES]]")
         else:
-            tokens = tokenizer.tokenize(query)
-            try:
-                expression = executeQuerry("R",tokens)
-                print(expression.newRel)
-                print(expression.querry + ";")
-                
-            except IndexError:
-                print("Syntax Error: Perhaps an argument is missing ?")
-            except Exception as e: 
-                print(e)
-                print()
+                try:
+                    tokens = tokenizer.tokenize(query)
+
+                    if len(tokens) == 1 :
+                        printRel(tokens[0])
+                        
+                    elif len(tokens) != 0:
+                        name = None
+                        index = 0
+                        # If there is an equal we can give a name
+                        if tokens[1] == '=':
+                            name = tokens[0]
+                            index += 2
+
+                        expression = executeQuerry(name,tokens[index:])
+                        print("\033[96m" + str(expression.newRel) + "\033[0m")
+                        print("\033[94m" + expression.querry +  ";"+"\033[0m" )
+                        
+                    else:
+                        print()
+                except IndexError:
+                    print("Syntax Error: Perhaps an argument is missing ?")
+                except Exception as e: 
+                    print(e)
+                    print()
     print("\n")
 
 
@@ -81,7 +96,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         # Vérifie si le dernier paramètre est une expression si oui : CAS RECURSSIF
         if SPJRUDlist.__contains__(tokens[index + 3]):
             
-            expression = executeQuerry(name + "ver2",tokens[index + 3:len(tokens)-1])
+            expression = executeQuerry(None,tokens[index + 3:len(tokens)-1])
             return SJU.Select(arg1,condition,arg2,expression,name)
         else:
             relation = rel.getRelation(tokens[index + 3])
@@ -116,7 +131,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         
         # If the user gave an expression then recursivity
         if SPJRUDlist.__contains__(tokens[index + 5]):
-            expression = executeQuerry(name + "ver2",tokens[index + 5:len(tokens)-1])
+            expression = executeQuerry(None,tokens[index + 5:len(tokens)-1])
             return PRD.Project(args,expression,name)
         else:
             relation = rel.getRelation(tokens[index + 5])
@@ -147,8 +162,8 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
 
         # If the user  gave an expression then recursivity
         if SPJRUDlist.__contains__(tokens[8]):
-            expression = executeQuerry(name + "ver2",tokens[8:len(tokens)-1])
-            print(expression)
+            expression = executeQuerry(None,tokens[8:len(tokens)-1])
+
             return PRD.Rename(oldArg,newArg,expression,name)
         else:
             relation = rel.getRelation(tokens[8])
@@ -166,6 +181,96 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         if tokens[1] != '[' or tokens[len(tokens)-1] != ']':
             _syntaxError("The arguments of the 'JOIN' expression must start with [ and end with ]","project",tokens)
         
+        args = _getBothArgs(tokens,name)
+        return SJU.Join(args[0],args[1],name)
+    #_______________________________________________________________________________________________________________________________________________________________________________
+    elif tokens[0] == "diff":
+        if len(tokens) < 6:
+            _syntaxError("Not enough arguments", "difference", tokens)
+        if tokens[1] != '[' or tokens[len(tokens)-1] != ']':
+            _syntaxError("The arguments of the 'DIFF' expression must start with [ and end with ]","diff",tokens)
+        
+        args = _getBothArgs(tokens,name)
+
+        return PRD.Diff(args[0],args[1],name)
+    #_______________________________________________________________________________________________________________________________________________________________________________
+    elif tokens[0] == "union":
+        if len(tokens) < 6:
+            _syntaxError("Not enough arguments","union",tokens)
+        if tokens[1] != '[' or tokens[len(tokens)-1] != ']':
+            _syntaxError("The arguments of the 'UNION' expression must start with [ and end with ]","union",tokens)
+        
+        args = _getBothArgs(tokens,name)
+        return SJU.Union(args[0],args[1],name)
+
+    #_______________________________________________________________________________________________________________________________________________________________________________
+    else:
+        raise Exception("\033[91mThe expression: " + tokens[0] + " is not part of the SPRJURD expressions\033[0m")
+        
+    
+
+
+# select[(Color,<>,yellow),project[(W,Color,Product),WAREHOUSES]]
+# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
+# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
+# select[(C,<>,yellow),rename[(Color,C),STOCK]]
+# rename[(Qty,Quantity),project[(W,Color,Qty),STOCK]]
+# rename[(W,Waahahha),select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]]
+# rename[(W,Ware),STOCK]
+
+# union[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+
+# diff[{project[(Name),CC]},{project[(Country),Cities]}]
+
+
+# GOOD : join[{select[(Color,<>,yellow),STOCK]} ,WAREHOUSES]
+# GOOD : join[WAREHOUSES,{select[(Color,<>,yellow),STOCK]}]
+
+# GOOD : join[STOCK,{project[(W),WAREHOUSES]}]
+# GOOD : join[{select[(Color,<>,yellow),STOCK]},{project[(W,Color,Product),STOCK]}]
+
+
+# select[(Product,=,handle),project[(W,Product,Qty,Color),STOCK]]
+# GOOD : diff[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+# union[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+# 
+# GOOD : diff[{rename[(Name,Country),project[(Name),CC]]}, {project[(Country),Cities]}]
+# GOOD : diff[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+#
+
+
+def printHelp():
+    i = 0
+    print("Expression Syntax: ")
+    for key in exprSyntax:
+        jump = " " * (11 - len(key))
+        print("\t " + key + jump + ":= " + exprSyntax[key])
+        if(i == 2):
+            print("")
+        i += 1
+
+def printRel(relName: str):
+    relation = rel.getRelation(relName)
+    if relation == None:
+        _argumentError(relName,None)
+    print(relation)
+
+
+
+
+def _syntaxError(reason : str, expression : str, tokens : tuple):
+    raise Exception("\033[91m Syntax Error: '"+ reason + "' \n From:" + tokenizer.toString(tokens) + "\n Please check that you have something like this : \n " + exprSyntax[expression] + " \033[0m")
+
+def _argumentError(reason: str,tokens: tuple):
+    fro = ""
+    if tokens != None:
+        fro = tokenizer.toString(tokens)
+    else:
+        fro = reason
+    raise Exception("\033[91mArgument Error: \n FROM " + fro + "\n There are no relation (created during the execution of the program) called: " + reason + "\033[0m")
+
+def _getBothArgs(tokens: tuple, name: str) -> list:
+
         args = [1,2]
         index = 0
         # Get the expressions/relations
@@ -187,7 +292,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
                 
                 exp = tuple(exp)
                 index += 3
-                args[i] = executeQuerry(name + "ver2", exp)
+                args[i] = executeQuerry(None, exp)
             # Relation
 
             else:
@@ -197,47 +302,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             
                 # If the relation asked doesn't exit -> error
                 if args[i] == None:
-                    raise Exception("Argument Error: \n FROM " + tokenizer.toString(tokens) + "\n There are no relation (created during the execution of the program) called: " + tokens[index - 2])
+                    _argumentError(str(tokens[index - 2]),tokens)
+        return args
             
-                
-        return SJU.Join(args[0],args[1],name)
-        
-        
-        
 
-
-# select[(Color,<>,yellow),project[(W,Color,Product),WAREHOUSES]]
-# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
-# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
-# select[(C,<>,yellow),rename[(Color,C),STOCK]]
-# rename[(Qty,Quantity),project[(W,Color,Qty),STOCK]]
-# rename[(W,Waahahha),select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]]
-# rename[(W,Ware),STOCK]
-
-
-# GOOD : join[{select[(Color,<>,yellow),STOCK]} ,WAREHOUSES]
-# GOOD : join[WAREHOUSES,{select[(Color,<>,yellow),STOCK]}]
-
-# GOOD : join[STOCK,{project[(W),WAREHOUSES]}]
-# GOOD : join[{select[(Color,<>,yellow),STOCK]},{project[(W,Color,Product),STOCK]}]
-
-
-# select[(Product,=,handle),project[(W,Product,Qty,Color),STOCK]]
-# project[(c,W),rename[(Color,c),STOCK]]
-# Problème car != en token : ['!','=']
-        
-
-def printHelp():
-    i = 0
-    print("Expression Syntax: ")
-    for key in exprSyntax:
-        jump = " " * (11 - len(key))
-        print("\t " + key + jump + ":= " + exprSyntax[key])
-        if(i == 2):
-            print("")
-        i += 1
-
-
-
-def _syntaxError(reason : str, expression : str, tokens : tuple):
-    raise Exception("Syntax Error: '"+ reason + "' \n From:" + tokenizer.toString(tokens) + "\n Please check that you have something like this : \n " + exprSyntax[expression])

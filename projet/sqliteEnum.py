@@ -6,3 +6,4 @@ class SqliteTypes(enum.Enum):
     REAL    =   "real"       #The value is a floating point value, stored as an 8-byte IEEE floating point number.
     TEXT    =   "text"       #The value is a text string, stored using the database encoding (UTF-8, UTF-16BE or UTF-16LE).
     BLOBL   =   "blobl"      #The value is a blob of data, stored exactly as it was input.
+    
