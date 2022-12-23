@@ -1,0 +1,172 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+
+\begin{document}
+
+\begin{titlepage}
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+\center
+
+\includegraphics[width=5.5cm]{fac.png}
+\includegraphics[width=5.5cm]{umons.png}
+\\[3.0cm]
+\large
+Année académique 2022-2023
+\HRule \\[0.4cm]
+{ \huge \bfseries Rapport de projet : Base de donnée \\[0.2cm] }
+\HRule \\[2.0cm]
+
+\Large
+\underline{Auteurs}
+\\[0.2cm]
+Razanajao Aina
+
+Foucart Axel
+\\[1.0cm]
+\underline{Professeur}
+\\[0.2cm]
+Wijsen Jef
+
+Buys Alain
+\\[1.0cm]
+\underline{Assistant}
+\\[0.2cm]
+Bonte Sébastien
+\\[3.0cm]
+
+\end{titlepage}
+
+
+\LARGE
+\tableofcontents
+
+\newpage
+\section{Introduction}
+\normalsize
+Dans le cadre du cours du cours de base de donnée en BAC2 science informatique de l'Umons, les étudiants ont reçu commme projet de créer un interpréteur entre des requêtes de base de donnée en une requête SQL. Le language imposé est python. Nous utilisons la version python 3.10.6.
+\\[0.5cm]
+Nous nous sommes répartie les tâches ainsi :
+\begin{description}
+\item[Axel] : les requêtes "JOIN", "RENAME", "PROJECT","DIFFERENT" ainsi que la base de l'arbre syntaxique, la classe "Relation" et les testes.
+\item[Aina] : les requêtes "SELECT" et "UNION" ainsique le rapport et  une partie de l'arbre syntaxique.\\[0.1cm]
+\end{description}
+
+
+Voici un exemple d'interprétation d'une requête, il s'agit d'une projection des attributs "First" et "Second" dans la relation appellée "Exemple" :
+\[
+\text{PROJECT('First','Second',Rel('Exemple')) }\to \text{ SELECT First, Second FROM Exemple}
+\]
+\\
+\section{Organisation des classes}
+\subsection{Classe Relation}
+\newpage
+\subsection{Classe Expression}
+
+\subsection{Classe SPJRUD}
+\begin{itemize}
+\item[$\diamond$] Expression (classe mère)
+
+\item[$\diamond$] Select : select[(attribut1,condition,attribut2/valeur),relation/expression]
+\\[1mm]
+Le premier argument est le nom de l'atttribut, le troisième est la valeur de comparaison. La condition regroupe : $!=,<>,=,>,<,>=,<=.$ Le quatrième argument est la table dans lequel on effectue l'opération ou une expression.
+
+Exemple : considérons la table Pokédex, on veut les 151 premiers \newline pokémon.
+\[
+select[(NumPokemon,<,152),Pokedex]
+\]
+\[
+\equiv
+\]
+\[
+SELECT * FROM\ Pokedex\ WHERE\ NumPokemon < 152;
+\]
+\\
+
+\item[$\diamond$] Project : project[(attribut1,...,attributN),relation/expression]
+
+Le dernier argument est la table dans lequel on effectue l'opération ou une expression. Les premiers arguments sont les attributs désirés.
+
+Exemple : considérons la table Qualification où on veut le pilote, son écurie et son temps.
+\[
+select[(Pilote,Ecurie,Temps),Qualification]
+\]
+\[
+\equiv
+\]
+\[
+SELECT\ Pilote,Ecurie,Temps\ FROM\ Qualification;
+\]
+\\
+
+\item[$\diamond$] Join : join(tableA/expressionA,tableB/ExpressionB)
+Les arguments sont les tables ou les expressions dont on veut faire la jointure.
+
+Exemple : considérons la table Couleur et la table Salon. On veut faire la jointure entre ses deux tables.
+
+\[
+join(Couleur,Salon)
+\]
+\[
+\equiv
+\]
+\[
+SELECT * FROM\ Couleur\ NATURAL\ JOIN\ Salon; 
+\]
+
+
+\item[$\diamond$] Rename : rename(oldName,newName,table/expression)
+Le premier argument est le nom initial de l'attribut et le deuxième est le nouveau nom de cette attribut. Enfin, le dernier argument est la table ou l'expression où l'on désire effectuer l'opération.
+
+Exemple : considérons la table FIA et qu'on veut changer la catégorie "Groupe\_B" en "WRC".
+
+\[
+rename(Groupe\_B,WRC,FIA)
+\]
+\[
+\equiv
+\]
+\[
+SELECT\ Groupe\_B\ AS\ WRC\ FROM\ FIA; 
+\]
+
+\item[$\diamond$] Union : union(tableA/expresionA,tableB/expressionB)
+Les arguments sont les tables ou les expressions dont on veut faire l'union.
+
+Exemple : considérons la table Uchiha et la table Senju. On veut faire l'union de ces tables.
+
+\[
+union(Uchiha,Senju)
+\]
+\[
+\equiv
+\]
+\[
+SELECT * FROM\ Senju\ NATURAL\ UNION\ Uchiha; 
+\]
+
+\item[$\diamond$] Different : different(tableA/expressionA,tableB/expressionB)
+
+Les arguments sont les tables ou les expressions dont on veut faire la différence. 
+
+Exemple : considérons la table AnimeNonVU et la table DejaVu. On désire faire la difference entre ces deux tables.
+
+\[
+difference(AnimeNonVU,DejaVu)
+\]
+\[
+\equiv
+\]
+\[
+SELECT * FROM\ AnimeNonVU\ EXCEPT\ DejaVu; 
+\]\\[1mm]
+\end{itemize}
+
+$\textbf{Nous vous rappelons que le résultat des opérations est une toute nouvelle table.}$
+
+\end{document}
