@@ -1,8 +1,6 @@
 import tokenizer
-import expr
 import rel
-import SJU
-import PRD
+import SPJRUD
 import traceback
 import readline
 import sqlite3
@@ -54,7 +52,7 @@ def readUserQuery(database : str):
 
 
 
-def executeQuerry(name: str,tokens : list) -> expr.Expression:
+def executeQuerry(name: str,tokens : list) -> SPJRUD.Expression:
     #print(tokens)
     if len(tokens) == 1 or len(tokens) == 0:
         raise Exception("All expressions need to have arguments")
@@ -99,7 +97,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             
             expression = executeQuerry(None,tokens[index + 3:len(tokens)-1])
             try:
-                return SJU.Select(arg1,condition,arg2,expression,name)
+                return SPJRUD.Select(arg1,condition,arg2,expression,name)
             except Exception as e:
                 _expressionError(e,"select",tokens)
         else:
@@ -107,7 +105,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             if relation == None:
                 _argumentError(tokens[index + 3],tokens)
             try:
-                return SJU.Select(arg1,condition,arg2,relation,name)
+                return SPJRUD.Select(arg1,condition,arg2,relation,name)
             except Exception as e:
                 _expressionError(e,"select",tokens)
     # _______________________________________________________________________________________________________________________________________________________________________________
@@ -139,7 +137,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         if SPJRUDlist.__contains__(tokens[index + 5]):
             expression = executeQuerry(None,tokens[index + 5:len(tokens)-1])
             try:
-                return PRD.Project(args,expression,name)
+                return SPJRUD.Project(args,expression,name)
             except Exception as e:
                 _expressionError(e,"project",tokens)
         else:
@@ -150,7 +148,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
                 raise Exception("Argument Error: \n FROM " + tokenizer.toString(tokens) + "\n There are no relation (created during the execution of the program) called: " + tokens[index + 5])
             # else
             try:
-                return PRD.Project(args,relation,name)
+                return SPJRUD.Project(args,relation,name)
             except Exception as e:
                 _expressionError(e,"project",tokens)
     # _______________________________________________________________________________________________________________________________________________________________________________
@@ -175,7 +173,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         if SPJRUDlist.__contains__(tokens[8]):
             expression = executeQuerry(None,tokens[8:len(tokens)-1])
             try:
-                return PRD.Rename(oldArg,newArg,expression,name)
+                return SPJRUD.Rename(oldArg,newArg,expression,name)
             except Exception as e:
                 _expressionError(e,"rename",tokens)
         else:
@@ -186,7 +184,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
                 raise Exception("Argument Error: \n FROM " + tokenizer.toString(tokens) + "\n There are no relation (created during the execution of the program) called: " + tokens[8])
             # else
             try:
-                return PRD.Rename(oldArg,newArg,relation,name)
+                return SPJRUD.Rename(oldArg,newArg,relation,name)
             except Exception as e:
                 _expressionError(e,"rename",tokens)
     # _______________________________________________________________________________________________________________________________________________________________________________
@@ -198,7 +196,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         
         args = _getBothArgs(tokens,name)
         try:
-            return SJU.Join(args[0],args[1],name)
+            return SPJRUD.Join(args[0],args[1],name)
         except Exception as e:
                 _expressionError(e,"join",tokens)
     #_______________________________________________________________________________________________________________________________________________________________________________
@@ -210,7 +208,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         
         args = _getBothArgs(tokens,name)
         try:
-            return PRD.Diff(args[0],args[1],name)
+            return SPJRUD.Diff(args[0],args[1],name)
         except Exception as e:
                 _expressionError(e,"difference",tokens)
     #_______________________________________________________________________________________________________________________________________________________________________________
@@ -222,7 +220,7 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         
         args = _getBothArgs(tokens,name)
         try:
-            return SJU.Union(args[0],args[1],name)
+            return SPJRUD.Union(args[0],args[1],name)
         except Exception as e:
                 _expressionError(e,"union",tokens)
     #_______________________________________________________________________________________________________________________________________________________________________________
@@ -232,33 +230,6 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
     
 
 
-# select[(Color,<>,yellow),project[(W,Color,Product),WAREHOUSES]]
-# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
-# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
-# select[(C,<>,yellow),rename[(Color,C),STOCK]]
-# rename[(Qty,Quantity),project[(W,Color,Qty),STOCK]]
-# rename[(W,Waahahha),select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]]
-# rename[(W,Ware),STOCK]
-
-# union[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
-
-# diff[{project[(Name),CC]},{project[(Country),Cities]}]
-
-
-# GOOD : join[{select[(Color,<>,yellow),STOCK]} ,WAREHOUSES]
-# GOOD : join[WAREHOUSES,{select[(Color,<>,yellow),STOCK]}]
-
-# GOOD : join[STOCK,{project[(W),WAREHOUSES]}]
-# GOOD : join[{select[(Color,<>,yellow),STOCK]},{project[(W,Color,Product),STOCK]}]
-
-
-# select[(Product,=,handle),project[(W,Product,Qty,Color),STOCK]]
-# GOOD : diff[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
-# union[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
-# 
-# GOOD : diff[{rename[(Name,Country),project[(Name),CC]]}, {project[(Country),Cities]}]
-# GOOD : diff[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
-#
 
 
 def printHelp():
@@ -333,3 +304,31 @@ def _getBothArgs(tokens: tuple, name: str) -> list:
         return args
             
 
+# Some query you can test
+# select[(Color,<>,yellow),project[(W,Color,Product),WAREHOUSES]]
+# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
+# select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]
+# select[(C,<>,yellow),rename[(Color,C),STOCK]]
+# rename[(Qty,Quantity),project[(W,Color,Qty),STOCK]]
+# rename[(W,Waahahha),select[(Color,<>,yellow),project[(W,Color,Product),STOCK]]]
+# rename[(W,Ware),STOCK]
+
+# union[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+
+# diff[{project[(Name),CC]},{project[(Country),Cities]}]
+
+
+# GOOD : join[{select[(Color,<>,yellow),STOCK]} ,WAREHOUSES]
+# GOOD : join[WAREHOUSES,{select[(Color,<>,yellow),STOCK]}]
+
+# GOOD : join[STOCK,{project[(W),WAREHOUSES]}]
+# GOOD : join[{select[(Color,<>,yellow),STOCK]},{project[(W,Color,Product),STOCK]}]
+
+
+# select[(Product,=,handle),project[(W,Product,Qty,Color),STOCK]]
+# GOOD : diff[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+# union[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+# 
+# GOOD : diff[{rename[(Name,Country),project[(Name),CC]]}, {project[(Country),Cities]}]
+# GOOD : diff[{project[(W),WAREHOUSES]},{project[(W),STOCK]}]
+#

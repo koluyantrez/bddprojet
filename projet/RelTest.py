@@ -3,11 +3,11 @@ from rel import isInDatabase
 from sqliteEnum import SqliteTypes as sType
 import relationsForTesting as r
 
-from PRD import Rename
-from PRD import Project
-from PRD import Diff
-from SJU import Join
-from SJU import Select
+from SPJRUD import Rename
+from SPJRUD import Project
+from SPJRUD import Diff
+from projet.SPJRUD import Join
+from projet.SPJRUD import Select
 
 # Project( (tuple d'arg), Relation  ) -> Nouvelle relation
 
