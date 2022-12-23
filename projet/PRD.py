@@ -3,7 +3,7 @@ from sqliteEnum import SqliteTypes as sType
 from expr import Expression
 
 class Rename(Expression):
-    def __init__(self, oldArgu: str, newArgu: str, rel, name: str) -> None:
+    def __init__(self, oldArgu: str, newArgu: str, rel, name = None) -> None:
         #Call the parent constructor
 
         # If it's an expression then 
@@ -29,12 +29,15 @@ class Rename(Expression):
             self.__checkArgs(oldArgu,newArgu)
             self.oldArg = oldArgu
             self.newArg = newArgu
-
-            #We create the new name
-            #self.newName = "RenameOf_" + oldArgu + "To" + newArgu + "_From" + rel.getName()
-            self.newName = name
+            if name == None:
+                #We create the new name
+                self.newName = "RenOf_" + oldArgu + "To" + newArgu + "_From" + rel.getName()
+            else:
+                self.newName = name
+            
             # We create the relation/ table
             self.newRel = self.__createRelation()
+            
             
 
 
@@ -112,7 +115,7 @@ class Rename(Expression):
 
 # ___________________________________________________________________________________________________
 class Project(Expression):
-    def __init__(self,args: tuple, rel, name: str) -> None:
+    def __init__(self,args: tuple, rel, name = None) -> None:
         #Call the parent constructor
 
         # If it's an expression then 
@@ -135,9 +138,11 @@ class Project(Expression):
     def __initialisation(self,args: dict, oldRel: Relation, name: str):
         # We check the arguments given
         argsDic = self.__checkArgs(args)
-        # We create the new name
-        #argStr = self._argsToString(argsDic).replace(",","")
-        #name = "ProjectOf_" + argStr + "_From" + self.oldRel.getName()
+        if name == None:
+            # We create the new name
+            argStr = self._argsToString(argsDic).replace(",","")
+            name = "PrjOf_" + argStr + "_From" + self.oldRel.getName()
+        
         # We create the new relation
         self.newRel = Relation(self.oldRel.getDataBase(),name,argsDic)
         # We fill this table
@@ -203,10 +208,11 @@ class Diff(Expression):
     # i.e Rel1 @minus Rel2
     # Verifier que relation 1 et relation 2 ont les même args
     # 
-    def __init__(self,rel1: Relation, rel2: Relation, name : str):
+    def __init__(self,rel1: Relation, rel2: Relation, name = None):
         # 4 cas possibles:
         # rel1 est une expression et rel2 aussi
         if (isinstance(rel1,Expression) and isinstance(rel2,Expression)):
+
             super().__init__(rel1.newRel,None,None,False)
             self.__initialisation(rel1.newRel,rel2.newRel,name)
             self.querry = self.__fusionQuerries(rel1.querry,rel2.querry,rel1.newRel.getArgs())
@@ -238,14 +244,15 @@ class Diff(Expression):
         self.__checkArgs(rel1,rel2)
 
         # We create the new name
-
-        #name = "DiffOf_" + rel1.getName() + "_BY_" + rel2.getName()
+        if name == None:    
+            name = "DiOf_" + rel1.getName() + "_BY_" + rel2.getName()
         
         # We create the new relation
         self.newRel = Relation(rel1.getDataBase(),name,rel1.getArgs())
 
         # We create the basic querry
         querry = "SELECT "+ self._argsToString(rel1.getArgs()) + " FROM " + rel1.getName() + " EXCEPT " + "SELECT "+ self._argsToString(rel1.getArgs()) + " FROM " + rel2.getName()
+        print(querry)
         self.__createQuerry(rel1,rel2)
         self._addTupples(querry)
 
@@ -260,8 +267,6 @@ class Diff(Expression):
             raise Exception("Difference not possible"
                             +" because " + rel1.getName() + " does not have the same args than "+ rel2.getName())
         
-            
-    
     def __createQuerry(self,rel1: Relation, rel2:Relation) -> str:        
         arg1 = self._argsToString(rel1.getArgs())
         arg2 = self._argsToString(rel2.getArgs())

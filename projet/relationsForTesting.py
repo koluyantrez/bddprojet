@@ -64,6 +64,15 @@ DEPARTEMENTS.addTuple(("MIS","Pierre"))
 
 
 
+args = {"Name":sType.TEXT, "Country": sType.TEXT, "Population" : sType.REAL}
+Cities = Relation("relationdata.db","Cities",args)
+Cities.addTuple(("Begen","Belgium",20.3))
+Cities.addTuple(("Bergen","Norway",30.5))
+Cities.addTuple(("Brussels","Belgium",370.6))
 
 
-
+args = {"Name": sType.TEXT, "Capital": sType.TEXT, "Population": sType.REAL, "Currency": sType.TEXT}
+CC = Relation("relationdata.db","CC",args)
+CC.addTuple(("Belgium","Brussels",10255.6,"EUR"))
+CC.addTuple(("Norway","Oslo",4463.2,"NOK"))
+CC.addTuple(("Japan","Tokyo",128888.0,"YEN"))
