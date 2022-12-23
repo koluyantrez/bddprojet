@@ -5,6 +5,7 @@ import SJU
 import PRD
 import traceback
 import readline
+import sqlite3
 
 stopList = ["stop","close","exit","quit"]
 SPJRUDlist = ["select","project","join","rename","union","diff"]
@@ -15,8 +16,7 @@ exprSyntax = {"select":"select[(arg1,condition,arg2),relation/expression]","proj
 def readUserQuery(database : str):
     print("USING: " + database)
     while(True):
-        print("> ",end="")
-        query = input()
+        query = input("> ")
         if stopList.__contains__(query.lower()):
             break
         elif query.upper() == "HELP":
@@ -39,11 +39,11 @@ def readUserQuery(database : str):
                         expression = executeQuerry(name,tokens[index:])
                         print("\033[96m" + str(expression.newRel) + "\033[0m")
                         print("\033[94m" + expression.querry +  ";"+"\033[0m" )
-                        
+                        print()
                     else:
                         print()
                 except IndexError:
-                    print("Syntax Error: Perhaps an argument is missing ?")
+                    print("\033[91mUnknown Error: Perhaps an argument is missing ? \033[0m")
                 except Exception as e: 
                     print(e)
                     print()
@@ -90,20 +90,26 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         
         if tokens[index + 1] != ')' :
             _syntaxError("')' missing", "select", tokens)
+        
         if tokens[index + 2] != ',':
             _syntaxError("',' missing", "select", tokens)                 
-    
+        
         # Vérifie si le dernier paramètre est une expression si oui : CAS RECURSSIF
         if SPJRUDlist.__contains__(tokens[index + 3]):
             
             expression = executeQuerry(None,tokens[index + 3:len(tokens)-1])
-            return SJU.Select(arg1,condition,arg2,expression,name)
+            try:
+                return SJU.Select(arg1,condition,arg2,expression,name)
+            except Exception as e:
+                _expressionError(e,"select",tokens)
         else:
             relation = rel.getRelation(tokens[index + 3])
             if relation == None:
-                raise Exception("Argument Error: \n FROM " + tokenizer.toString(tokens) + "\n There are no relation (created during the execution of the program) called: " + tokens[index + 5])
-
-            return SJU.Select(arg1,condition,arg2,relation,name)
+                _argumentError(tokens[index + 3],tokens)
+            try:
+                return SJU.Select(arg1,condition,arg2,relation,name)
+            except Exception as e:
+                _expressionError(e,"select",tokens)
     # _______________________________________________________________________________________________________________________________________________________________________________
     elif tokens[0] == "project":
         
@@ -132,7 +138,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         # If the user gave an expression then recursivity
         if SPJRUDlist.__contains__(tokens[index + 5]):
             expression = executeQuerry(None,tokens[index + 5:len(tokens)-1])
-            return PRD.Project(args,expression,name)
+            try:
+                return PRD.Project(args,expression,name)
+            except Exception as e:
+                _expressionError(e,"project",tokens)
         else:
             relation = rel.getRelation(tokens[index + 5])
             
@@ -140,8 +149,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             if relation == None:
                 raise Exception("Argument Error: \n FROM " + tokenizer.toString(tokens) + "\n There are no relation (created during the execution of the program) called: " + tokens[index + 5])
             # else
-            
-            return PRD.Project(args,relation,name)
+            try:
+                return PRD.Project(args,relation,name)
+            except Exception as e:
+                _expressionError(e,"project",tokens)
     # _______________________________________________________________________________________________________________________________________________________________________________
     elif tokens[0] == "rename":
         if len(tokens) < 9:
@@ -163,8 +174,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
         # If the user  gave an expression then recursivity
         if SPJRUDlist.__contains__(tokens[8]):
             expression = executeQuerry(None,tokens[8:len(tokens)-1])
-
-            return PRD.Rename(oldArg,newArg,expression,name)
+            try:
+                return PRD.Rename(oldArg,newArg,expression,name)
+            except Exception as e:
+                _expressionError(e,"rename",tokens)
         else:
             relation = rel.getRelation(tokens[8])
             
@@ -172,8 +185,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             if relation == None:
                 raise Exception("Argument Error: \n FROM " + tokenizer.toString(tokens) + "\n There are no relation (created during the execution of the program) called: " + tokens[8])
             # else
-            
-            return PRD.Rename(oldArg,newArg,relation,name)
+            try:
+                return PRD.Rename(oldArg,newArg,relation,name)
+            except Exception as e:
+                _expressionError(e,"rename",tokens)
     # _______________________________________________________________________________________________________________________________________________________________________________
     elif tokens[0] == "join":
         if len(tokens) < 6:
@@ -182,7 +197,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             _syntaxError("The arguments of the 'JOIN' expression must start with [ and end with ]","project",tokens)
         
         args = _getBothArgs(tokens,name)
-        return SJU.Join(args[0],args[1],name)
+        try:
+            return SJU.Join(args[0],args[1],name)
+        except Exception as e:
+                _expressionError(e,"join",tokens)
     #_______________________________________________________________________________________________________________________________________________________________________________
     elif tokens[0] == "diff":
         if len(tokens) < 6:
@@ -191,8 +209,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             _syntaxError("The arguments of the 'DIFF' expression must start with [ and end with ]","diff",tokens)
         
         args = _getBothArgs(tokens,name)
-
-        return PRD.Diff(args[0],args[1],name)
+        try:
+            return PRD.Diff(args[0],args[1],name)
+        except Exception as e:
+                _expressionError(e,"difference",tokens)
     #_______________________________________________________________________________________________________________________________________________________________________________
     elif tokens[0] == "union":
         if len(tokens) < 6:
@@ -201,8 +221,10 @@ def executeQuerry(name: str,tokens : list) -> expr.Expression:
             _syntaxError("The arguments of the 'UNION' expression must start with [ and end with ]","union",tokens)
         
         args = _getBothArgs(tokens,name)
-        return SJU.Union(args[0],args[1],name)
-
+        try:
+            return SJU.Union(args[0],args[1],name)
+        except Exception as e:
+                _expressionError(e,"union",tokens)
     #_______________________________________________________________________________________________________________________________________________________________________________
     else:
         raise Exception("\033[91mThe expression: " + tokens[0] + " is not part of the SPRJURD expressions\033[0m")
@@ -269,6 +291,11 @@ def _argumentError(reason: str,tokens: tuple):
         fro = reason
     raise Exception("\033[91mArgument Error: \n FROM " + fro + "\n There are no relation (created during the execution of the program) called: " + reason + "\033[0m")
 
+def _expressionError(e: Exception, expression: str, tokens: tuple):
+    
+    raise Exception("\033[91mExpression Error: \n FROM " + tokenizer.toString(tokens) + "\nCould not execute "+ expression + " expression"  + "\n Reason : " + str(e)   +"\033[0m")
+
+
 def _getBothArgs(tokens: tuple, name: str) -> list:
 
         args = [1,2]
@@ -302,7 +329,7 @@ def _getBothArgs(tokens: tuple, name: str) -> list:
             
                 # If the relation asked doesn't exit -> error
                 if args[i] == None:
-                    _argumentError(str(tokens[index - 2]),tokens)
+                    _argumentError(str(tokens[index + 2]),tokens)
         return args
             
 

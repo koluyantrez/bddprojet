@@ -25,7 +25,7 @@ print(R.newRel)
 print(S.newRel)
 
 print(U.newRel)
-
+V = Select("W","=","400",r.STOCK,"V")
 
 cursor = U.newRel.getCursor()
 
